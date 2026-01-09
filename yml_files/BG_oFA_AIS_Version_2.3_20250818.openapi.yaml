@@ -1,0 +1,5075 @@
+openapi: 3.0.1
+
+info:
+  contact:
+    email: info@berlin-group.org
+    name: The Berlin Group - A European Standards Initiative
+    url: https://www.berlin-group.org/
+  description: |
+    This specification foresees different types of account information services:
+    * Transaction lists for a given account with transactions with booking status booked or pending including balances if applicable,
+    * List of standing orders of a given account, reported as transactions with booking status information,
+    * Balances of a given account,
+    * A list of addressable accounts,
+    * Account details of a given account or of the list of all accessible accounts relative to a granted consent, and
+    * Account details might include the account owner name, where specific requirements on the consent process might apply, see below.
+    Hereby the definition of the list of addressable and accessible accounts is as follows:
+    Definition: The list of addressable accounts of an ASPSP related to a PSU is the list of accounts of a PSU which are open for access through the XS2A API according to the definition 
+    of payment accounts provided by [PSD2].
+    Definition: The list of accessible accounts of an ASPSP related to a PSU's consent is the list of accounts, where the consent of the PSU has been granted to at least one of the 
+    defined account information types. 
+    Note: The Read Data Request for the list of addressable accounts and for account details of a given account is syntactically identical. 
+    The difference is only in the underlying consent resource, referred to through the HTTP header parameter \"Consent-ID\".
+    Example: An ASPSP is providing IBAN1 and IBAN2 to a PSU. The PSU has granted the TPP the consent to access transactions and balances of IBAN1 only. In this case, the addressable accounts are IBAN1 and IBAN2, the list of accessible accounts consists only of IBAN1.
+  license:
+    name: Creative Commons Attribution 4.0 International Public License
+    url: https://creativecommons.org/licenses/by/4.0/
+  title: openFinance API Framework XS2A API as PSD2 Interface Implementation Guidelines - Account Information Service
+  version: "2.3"
+  x-references:
+    documents:
+      - document:
+        title: openFinance API Framework Data Dictionary
+        version: "2.2.6"
+      - document:
+        title: openFinance API Framework XS2A API as PSD2 Interface Implementation Guidelines
+        version: "2.3"
+
+externalDocs:
+  description: |
+    openFinance API Framework XS2A API as PSD2 Interface Implementation Guidelines
+  url: https://www.berlin-group.org/openfinance-downloads
+
+servers:
+  - url: https://api.testbank.com/psd2
+    description: PSD2 server
+  - url: https://test-api.testbank.com/psd2
+    description: Optional PSD2 test server
+
+tags:
+  - name: Account Information Service (AIS)
+    description: |
+      The component for Account Information Service (AIS) offers the following information services:
+      * Transaction lists for a given account with transactions with booking status booked or pending including balances if applicable,
+      * List of standing orders of a given account, reported as transactions with booking status information,
+      * Balances of a given account,
+      * A list of addressable accounts,
+      * Account details of a given account or of the list of all accessible accounts relative to a granted consent, and
+      * Account details might include the account owner name, where specific requirements on the consent process might apply.
+
+paths:
+  /v2/accounts:
+    get:
+      summary: Read Account List
+      description: | 
+        Reads a list of current accounts, with balances where required.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Account List\".
+      operationId: getAccountList
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QUERY_withBalance'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISACCOUNTLIST'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/accounts/{account-id}:
+    get:
+      summary: Read Account Details
+      description: | 
+        Reads details about a current account, with balances where required.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Account Details\".
+      operationId: getAccountDetails
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/QUERY_withBalance'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISACCOUNTDETAILS'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/accounts/{account-id}/balances:
+    get:
+      summary: Read Account Balance
+      description: | 
+        Reads balance data from a given current account addressed by \"account-id\".
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Balance\".
+      operationId: getAccountBalance
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISACCOUNTBALANCE'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/accounts/{account-id}/transactions:
+    get:
+      summary: Read Transaction List
+      description: | 
+        Reads account transaction data from a given account addressed by \"account-id\". 
+        This can be either booked or pending transactions or a list of standing orders as further transactional information.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Transaction List\".
+      operationId: getAccountTransactionList
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/QUERY_dateFrom'
+        - $ref: '#/components/parameters/QUERY_dateTo'
+        - $ref: '#/components/parameters/QUERY_entryReferenceFrom'
+        - $ref: '#/components/parameters/QUERY_bookingStatusGeneric'
+        - $ref: '#/components/parameters/QUERY_deltaList'
+        - $ref: '#/components/parameters/QUERY_withBalance'
+        - $ref: '#/components/parameters/QUERY_cardBrand'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISACCOUNTTXLIST'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/accounts/{account-id}/transactions/{transactionId}:
+    get:
+      summary: Read Transaction Details
+      description: | 
+        Reads transaction details from a given transaction addressed by \"transactionId\" on a given account addressed by \"account-id\". 
+        This call is only available on transactions as reported in a JSON format.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Transaction Details\".
+      operationId: getAccountTransactionDetails
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/PATH_transactionId'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISACCOUNTTXDTLS'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/card-accounts:
+    get:
+      summary: Read Card Account List
+      description: | 
+        Reads a list of card reconciliation accounts with additional information, e.g. balance information.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Card Account List\".
+      operationId: getCardAccountList
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISCARDACCOUNTLIST'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/card-accounts/{account-id}:
+    get:
+      summary: Read Card Account Details
+      description: | 
+        Reads details about a card reconciliation account.
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Card Account Details\".
+      operationId: getCardAccountDetails
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISCARDACCOUNTDETAILS'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/card-accounts/{account-id}/balances:
+    get:
+      summary: Read Card Account Balance
+      description: | 
+        Reads balance data from a given card reconciliation account addressed by \"account-id\". 
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Card Account Balance\".
+      operationId: getCardAccountBalance
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISCARDACCOUNTBALANCE'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/card-accounts/{account-id}/transactions:
+    get:
+      summary: Read Card Account Transaction List
+      description: | 
+        Reads account data from a given card reconciliation account addressed by \"account-id\".
+        See \"XS2A API as PSD2 Interface Implementation Guidelines \", section \"Read Card Account Transaction List\".
+      operationId: getCardAccountTransactionList
+      tags:
+        - Account Information Service (AIS)
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_accountId'
+        - $ref: '#/components/parameters/QUERY_dateFrom'
+        - $ref: '#/components/parameters/QUERY_dateTo'
+        - $ref: '#/components/parameters/QUERY_bookingStatusCard'
+        - $ref: '#/components/parameters/QUERY_deltaList'
+        - $ref: '#/components/parameters/QUERY_cardBrand'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+        - $ref: '#/components/parameters/HEADER_psuIpAddress_optional'
+        - $ref: '#/components/parameters/HEADER_consentId_mandatory'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok_200_AISCARDACCOUNTTXLIST'
+        '400':
+          $ref: '#/components/responses/decline_400_AIS'
+        '401':
+          $ref: '#/components/responses/decline_401_AIS'
+        '403':
+          $ref: '#/components/responses/decline_403_AIS'
+        '404':
+          $ref: '#/components/responses/decline_404_AIS'
+        '405':
+          $ref: '#/components/responses/decline_405_AIS'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_AIS'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '429':
+          $ref: '#/components/responses/decline_429_AIS'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+
+
+components:
+  securitySchemes:
+    BearerAuthOAuth:
+      description: |
+        Bearer Token. 
+        Is contained only, if an OAuth2 based authentication was performed in a pre-step or 
+        an OAuth2 based SCA was performed in a preceding AIS service in the same session.
+      type: http
+      scheme: bearer
+  schemas:
+    Max2048Text:
+      type: string
+      maxLength: 2048
+      example: 'Text, maximum of 2048 characters.'
+    references:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"References\" for more details.
+      type: object
+      properties:
+        accountServicerReference:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        instructionId:
+          description: |
+            Unique identification as assigned by an instructing party for an instructed party to unambiguously identify the instruction.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        endToEndId:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        uetr:
+          description: |
+            Universally unique identifier to provide an end-to-end reference of a payment transaction.
+            It is recommended to use time-based version (version 1) and variant 8,9,a or b of the UUID as defined in [RFC4122] for UUID fields such as uetr.
+          allOf:
+            - $ref: '#/components/schemas/UUID'
+        mandateId:
+          description: |
+            direct debit related mandate.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        checkNumber:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    MessageCode_405_AIS: 
+      description: |
+        Message codes defined for AIS for HTTP Error code 405 (METHOD NOT ALLOWED).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_405'
+    OrganisationIdentificationCode:
+      description: |
+      type: string
+      enum:
+        - BANK
+        - CBID
+        - CHID
+        - CINC
+        - COID
+        - CUST
+        - DUNS
+        - EMPL
+        - GS1G
+        - SREN
+        - SRET
+        - TXID
+        - BDID
+        - BOID
+      example: 'BOID'
+    cardAccountReport:
+      description: |
+         See document \"openFinance API Framework Data Dictionary\", section \"Card Account Report\" for more details.
+      type: object
+      required:
+        - _links
+      properties:
+        booked:
+          description: |
+            Shall be contained if bookingStatus parameter is set to \"booked\" or \"both\".
+          type: array
+          items:
+            $ref: '#/components/schemas/cardTransactions'
+        pending:
+          description: |
+            Not contained if the bookingStatus parameter is set to \"booked\".
+          type: array
+          items:
+            $ref: '#/components/schemas/cardTransactions'
+        _links:
+          description: |
+            The following links might be used within this context:
+            * cardAccount (mandatory when providing transaction reports on card reconciliation accounts under /card-accounts)
+            * card (mandatory when providing transaction reports on single card entry level under /cards)first (optional)
+            * next (optional)
+            * previous (optional)
+            * last (optional)
+          allOf:
+            - $ref: '#/components/schemas/links'
+    error_RFC7807_403_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_403_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_403_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    Max500Text:
+      type: string
+      maxLength: 500
+      example: 'Text, maximum of 500 characters.'
+    CurrencyCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{3}'
+      example: 'EUR'
+    BankTransactionCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{4,4}-[A-Z]{4,4}-[A-Z]{4,4}'
+      example: 'PMNT-RDDT-ESDD'
+    balance:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Balance\" for more details.
+      type: object
+      required:
+        - balanceAmount
+        - balanceType
+      properties:
+        balanceAmount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        balanceType:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/BalanceType'
+        creditLimitIncluded:
+          description: |
+            A flag indicating if the credit limit of the corresponding account is included in the calculation of the balance, where applicable.
+          type: boolean
+        lastChangeDateTime:
+          description: |
+            This data element might be used to indicate e.g. with the expected or booked balance that no action is known on the account, which is not yet booked.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        referenceDate:
+          description: |
+            indicates the date of the balance
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        lastCommittedTransaction:
+          description: |
+            entryReference of the last commited transaction to support the TPP in identifying whether all PSU transactions are already known.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    AccountStatusCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Acount Status Code\" for more details.
+      type: string
+      enum: 
+        - enabled
+        - deleted
+        - blocked
+      example: 'enabled'
+    MessageCode_403_AIS: 
+      description: Message codes defined for AIS for HTTP Error code 403 (FORBIDDEN).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_403'
+    hrefType:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"href Type\" for more details.
+      type: object
+      required:
+        - href
+      properties:
+        href:
+          description: |
+          type: string
+    remittance:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Remittance\" for more details.
+      type: object
+      properties:
+        referredDocumentInformation:
+          description: |
+            Set of elements used to identify the documents referred to in the remittance information.
+          allOf:
+            - $ref: '#/components/schemas/referredDocumentInformation'
+        creditorReferenceInformation:
+          description: |
+            Reference information provided by the creditor to allow the identification of the underlying documents.
+          allOf:
+            - $ref: '#/components/schemas/creditorReferenceInformation'
+        additionalRemittanceInformation:
+          description: |
+            Additional information to be displayed to the PSU e.g. within authorisation processes. This will not be used in related interbank payments.
+          type: array
+          items:
+            $ref: '#/components/schemas/Max140Text'
+    financialInstitutionIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Financial Institution Identification\" for more details.
+      type: object
+      properties:
+        bicfi:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/BICFI'
+        clearingSystemMemberId:
+          description: |
+            Information used to identify a member within a clearing system.
+          allOf:
+            - $ref: '#/components/schemas/clearingSystemMemberIdentification'
+        name:
+          description: |
+            Name of the financial institution
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        postalAddress:
+          description: |
+            Postal Address of the financial institution.
+          allOf:
+            - $ref: '#/components/schemas/postalAddress'
+        other:
+          description: |
+            Unique identification of an organisation, as assigned by an institution, using an identification scheme.
+          allOf:
+            - $ref: '#/components/schemas/genericFinancialInstitutionIdentification'
+    Max35Text:
+      type: string
+      maxLength: 35
+      example: 'Text, maximum of 35 characters.'
+    Max2Text:
+      type: string
+      maxLength: 2
+      example: '2C'
+    cardTransactionDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Card Transaction Details\" for more details.
+      type: object
+      properties:
+        paymentContext:
+          description: |
+            Context of the card payment transaction.
+          allOf:
+            - $ref: '#/components/schemas/paymentContextType'
+        sequenceNumber:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        transactionDateTime:
+          description: |
+            Local date and time of the transaction assigned by the POI (Point Of Interaction).
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        poiId:
+          description: |
+            Identification of the POI (Point Of Interaction) performing the transaction.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        authorisationCode:
+          description: |
+            Value assigned by the authorising party.
+          allOf: 
+            - $ref: '#/components/schemas/Max8Text'
+        saleReferenceId:
+          description: |
+            Global reference of the sale transaction for the sale system.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        transactionType:
+          description: |
+            Type of transaction being undertaken for the main service.
+          allOf:
+            - $ref: '#/components/schemas/CardTransactionType'
+    accountReference:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Account Reference\" for more details.
+      type: object
+      properties:
+        iban:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/IBAN'
+        bban:
+          description: |
+            BBAN of the account. This data elements is used for payment accounts which have no IBAN.
+          allOf:
+            - $ref: '#/components/schemas/BBAN'
+        pan:
+          description: |
+            Primary Account Number (PAN) of a card, can be tokenised by the ASPSP due to PCI DSS requirements. 
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        maskedPan:
+          description: |
+            Primary Account Number (PAN) of a card in a masked form.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        msisdn:
+          description: |
+            An alias to access a payment account via a registered mobile phone number.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        other:
+          description: |
+            An alias with a proprietary coding
+          allOf:
+            - $ref: '#/components/schemas/genericAccountIdentification'
+        typeCode:
+          description: |
+            Remark: Shall not be used in the consent model, since account category provides enough information for the ASPSP.
+          allOf:
+            - $ref: '#/components/schemas/CashAccountType'
+        typeProprietary:
+          description: |
+            Remark: Shall not be used in the consent model, since account category provides enough information for the ASPSP.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        currency:
+          description: |
+            ISO 4217 Alpha 3 currency code
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        proxy:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/proxyAccountIdentification'
+        name:
+          description: |
+            Name of the account
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        owner: 
+          description: |
+          allOf: 
+            - $ref: '#/components/schemas/partyDescription2'
+        servicer:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/financialInstitutionIdentification'
+    IBAN:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}'
+      example: 'FR7612345987650123456789014'
+    amountDependentRate:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Amount dependent Rate\" for more details.
+      type: object
+      required:
+        - percentage
+      properties:
+        percentage:
+          description: |
+            The (signed) rate of the interest.
+            Up to 20 significant figures. The decimal separator is a dot.
+            Trailing zeroes must be truncated.
+          type: string
+          pattern: '-?[0-9]{1,20}(\.[0-9]{0,19})?'
+        fromAmount:
+          description: |
+            Amount from which the interest rate applies.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        toAmount:
+          description: |
+            Amount up to which the interest rate applies.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+    index:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Index\" for more details.
+      type: object
+      properties:
+        index:
+          description: |
+            Though arbitrary text is technically supported, it is recommended to use the following keywords:
+            * \"CPI\" - customer Price Index
+            * \"FC\" - foreign currency
+            * \"other\" - for others, not clearly specified index relations.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        rootIndexValue:
+          description: |
+            A number (represented as a string) giving the basic index value which is the basis for the loan contract.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        exchangeRate:
+          description: |
+            Intended for usage in case of index = \"FC\".
+          allOf:
+            - $ref: '#/components/schemas/amountDependentRate'
+        additionalInformation:
+          description: |
+            Explanations e.g. to specify index = \"other\".
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+    error_RFC7807_401_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_401_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_401_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    transactions:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Transactions\" for more details.
+      type: object
+      required:
+        - transactionAmount
+      properties:
+        transactionId:
+          description: |
+            Can be used as access-ID in the API, where more details on an transaction is offered. 
+            If this data attribute is provided this shows that the AIS can get access on more details about this transaction using the GET Transaction Details Request. 
+            Remark: ASPSPs should ensure that transactionID, if provided, is unique relative to the account that PSU is accessing, in order to ensure the quality of the data provided to the API Client.
+          type: string
+        entryReference:
+          description: |
+            Is the identification of the transaction as used e.g. for reference for delta function on application level.
+            The same identification as for example used within camt.05x messages.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        batchIndicator:
+          description: |
+            If this indicator equals \"true\", then the related entry is a batch entry.
+          type: boolean
+        batchNumberOfTransactions:
+          description: |
+            Shall be used if and only if the batchIndicator is contained and equals \"true\".
+          type: integer
+        references:
+          description: |
+            Might contain the payment identification attributes endToEndId as well as the new UETR field.
+            In addition it is inlduing accountServicerReference, mandateId, checkId (all level 1 fields in V1.3.x).
+          allOf:
+            - $ref: '#/components/schemas/references'
+        localInstrumentCode:
+          description: |
+            User community specific instrument as a code provided by ISO20022.
+          allOf:
+            - $ref: '#/components/schemas/ExternalLocalInstrumentCode'
+        localInstrumentProprietary:
+          description: |
+            User community specific instrument as a proprietary attribute.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        bookingDate:
+          description: |
+            The Date when an entry is posted to an account on the ASPSPs books.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        valueDate:
+          description: |
+            Date at which assets become available to the account owner in case of a credit entry, or cease to be available to the account owner in case of a debit entry.
+            Usage: If entry status is pending and value date is present, then the value date refers to an expected/requested value date.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        transactionAmount:
+          description: |
+            The amount of the transaction or batch as billed to the account.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        currencyExchange:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/reportExchangeRate'
+        amountDetails:
+          description: |
+            Additional information to the transaction amount.
+          allOf:
+            - $ref: '#/components/schemas/amountDetails'
+        interbankSettlementDate:
+          description: |
+            Date on which the amount of money ceases to be available to the agent that owes it and when the amount of money becomes available to the agent to which it is due.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        cardTransaction:
+          description: |
+            Card transaction details in case of an underlying card transaction.
+          allOf:
+            - $ref: '#/components/schemas/cardTransactionDetails'
+        creditor:
+          description: |
+            Name and potentially an identification of the creditor if a \"Debited\" transaction
+          allOf:
+            - $ref: '#/components/schemas/partyDescription'
+        creditorAccount:
+          description: |
+            Account of the payee.
+          allOf:
+            - $ref: '#/components/schemas/accountReference'
+        creditorAgent:
+          description: |
+            Proprietary identifications might be provided under financialInstitutionId/other
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
+        ultimateCreditor:
+          description: |
+            Only name and identification is supported for now for this party.
+          allOf:
+            - $ref: '#/components/schemas/partyDescription4'
+        debtor:
+          description: |
+            Name and potentially an identification of the debtor if a \"Credited\" transaction
+          allOf:
+            - $ref: '#/components/schemas/partyDescription'
+        debtorAccount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/accountReference'
+        debtorAgent:
+          description: |
+            Proprietary identifications might be provided under financialInstitutionId/other
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
+        ultimateDebtor:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/partyDescription4'
+        remittanceInformationUnstructured:
+          description: |
+          type: array
+          items: 
+            $ref: '#/components/schemas/Max140Text'
+        remittanceInformationStructured:
+          description: |
+          type: array
+          items: 
+            $ref: '#/components/schemas/remittance'
+        entryDetails:
+          description: |
+            Might be used by the ASPSP to transport details about transactions within a batch.
+          type: array
+          items: 
+            $ref: '#/components/schemas/entryDetails'
+        additionalTransactionInformation:
+          description: |
+            Might be used by the ASPSP to transport additional transaction related information to the PSU
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        additionalInformationStructured:
+          description: |
+            Is used if and only if the bookingStatus entry equals \"information\". 
+            Every active standing order related to the dedicated payment account result into one entry.
+            Each received RTP result into one entry.
+          allOf:
+            - $ref: '#/components/schemas/structuredAdditionalInformation'
+        additionalTransactionInformationStructured:
+          description: |
+            Data about the transactional process of submission, authorisation and/or cancellation of the underlying payment.
+          allOf:
+            - $ref: '#/components/schemas/structuredAdditionalTransactionInformation'
+        purposeCode:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/PurposeCode'
+        bankTransactionCode:
+          description: |
+            Bank transaction code as used by the ASPSP  and using the sub elements of this structured code defined by ISO20022.
+            For standing order reports the following codes are applicable:
+            \"PMNT-ICDT-STDO\" for credit transfers,
+            \"PMNT-IRCT-STDO\" for instant credit transfers
+            \"PMNT-ICDT-XBST\" for cross-border credit transfers
+            \"PMNT-IRCT-XBST\" for cross-border real time credit transfers and
+            \"PMNT-MCOP-OTHR\" for specific standing orders which have a dynamical amount to move left funds e.g. on month end to a saving account
+          allOf:
+            - $ref: '#/components/schemas/BankTransactionCode'
+        bankTransactionCodeProprietary:
+          description: |
+            proprietary bank transaction code as used within a community or within an ASPSP e.g. 
+            for MT94x based transaction reports. Renaming of the attribute to adapt to statements.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        balanceAfterTransaction:
+          description: |
+            This is the balance after this transaction. Recommended balance type is interimBooked.
+          allOf:
+            - $ref: '#/components/schemas/balance'
+        _links:
+          description: |
+            The following links could be used here:
+            \"transactionDetails\" for retrieving details of a transaction.
+          allOf:
+            - $ref: '#/components/schemas/links'
+    _links_200_AISCARDACCOUNTTXLIST: 
+      type: object
+      additionalProperties: 
+        $ref: '#/components/schemas/hrefType'
+      properties:
+        download:
+          $ref: '#/components/schemas/hrefType'
+    CashAccountType:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - CACC
+        - CARD
+        - CASH
+        - CHAR
+        - CISH
+        - COMM
+        - CPAC
+        - LLSV
+        - LOAN
+        - MGLD
+        - MOMA
+        - NREX
+        - ODFT
+        - ONDP
+        - OTHR
+        - SACC
+        - SLRY
+        - SVGS
+        - TAXE
+        - TRAN
+        - TRAS
+        - VACC
+        - NFCA
+      example: 'CACC'
+    clientMessageInformation_404_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_404_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+    genericAccountIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Generic Account Identification\" for more details.
+      type: object
+      required:
+        - identification
+      properties:
+        identification:
+          description: |
+            Unique and unambiguous identification of an account.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        schemeNameCode:
+          description: |
+            An entry provided by an external ISO code list
+          allOf:
+            - $ref: '#/components/schemas/AccountIdentificationCode'
+        schemeNameProprietary:
+          description: |
+            A scheme name defined in a proprietary way.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        issuer:
+          description: |
+            Issuer of the identification
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    genericOrganisationIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Generic Organisation Identification\" for more details.
+      type: object
+      required:
+        - identification
+      properties:
+        identification:
+          description: |
+            Unique and unambiguous identification of an organisation.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        schemeNameCode:
+          description: |
+            An entry provided by an external ISO code list
+          allOf:
+            - $ref: '#/components/schemas/OrganisationIdentificationCode'
+        schemeNameProprietary:
+          description: |
+            A scheme name defined in a proprietary way.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        issuer:
+          description: |
+            Issuer of the identification
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    privateIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Private Identification\" for more details.
+      type: object
+      properties:
+        birthDate:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        provinceOfBirth:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        cityOfBirth:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        countryOfBirth:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/CountryCode'
+        others:
+          description: |
+            Unique identification of a person, as assigned by an institution, using an identification scheme. 
+            Shall be used if none of the above attributes is used.
+          type: array
+          items:
+            $ref: '#/components/schemas/personIdentification'
+    Max8Text:
+      type: string
+      maxLength: 8
+      example: '8CHR8CHR'
+    GeoLocation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Geo Location\" for more details.
+      type: string
+      pattern: 'GEO:-?[0-9]{1,2}\.[0-9]{6};-?[0-9]{1,3}\.[0-9]{6}'
+      example: 'GEO:52.506931;13.144558'
+    partyDescription4:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Party Description4\" for more details.
+      type: object
+      properties:
+        name:
+          description: |
+            Name of the party.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        identification:
+          description: |
+            Identification of the party.
+          allOf:
+            - $ref: '#/components/schemas/partyIdentification'
+    partyDescription2:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Party Description2\" for more details.
+      type: object
+      properties:
+        name:
+          description: |
+            Name of the party.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        postaladdress:
+          description: |
+            Postal Address of the party.
+          allOf:
+            - $ref: '#/components/schemas/postalAddress'
+    EventFrequencyCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Event Frequency Code\" for more details.
+      type: string
+      enum:
+        - Daily
+        - Weekly
+        - EveryTwoWeeks
+        - Monthly
+        - EveryTwoMonths
+        - Quarterly
+        - SemiAnnual
+        - Annual
+        - MonthlyVariable
+      example: 'Monthly'
+    cardTransactions:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Card Transactions\" for more details.
+      type: object
+      required:
+        - transactionAmount
+      properties:
+        cardTransactionId:
+          description: |
+            Unique end to end identity.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        terminalId:
+          description: |
+            Identification of the Terminal, where the card has been used.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        transactionDate:
+          description: |
+            date of the actual card transaction
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        acceptorTransactionDateTime:
+          description: |
+            Timestamp of the actual card transaction within the acceptance system
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        bookingDate:
+          description: |
+            booking date of the related booking on the card account
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        valueDate:
+          description: |
+            Date at which assets become available to the account owner in case of a credit entry, or cease to be available to the account owner in case of a debit entry.
+            For card transactions this is the payment due date of related booked transactions of a card.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        transactionAmount:
+          description: |
+            The amount of the transaction as billed to the card account.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        grandTotalAmount:
+          description: |
+            Total amount of the instalment including charges, insurance and taxes in addition to the funded amount.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        currencyExchange:
+          description: |
+            For card accounts, this often is restricted by the ASPSP to use only one exchange rate. 
+          type: array
+          items:
+            $ref: '#/components/schemas/reportExchangeRate'
+        originalAmount:
+          description: |
+            Original amount of the transaction at the Point of Interaction in orginal currency
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        markupFee:
+          description: |
+            Any fee related to the transaction in billing currency.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        markupFeePercentage:
+          description: |
+            Percentage of the involved transaction fee in relation to the billing amount, e.g. \"0.3\" for 0,3%
+          type: string
+        cardAcceptorId:
+          description: |
+            Identification of the Card Acceptor (e.g. merchant) as given in the related card transaction.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        cardAcceptorName:
+          description: |
+            Name of the Card Acceptor (e.g. merchant) as provided in the related card transaction
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        cardAcceptorAddress:
+          description: |
+            Address of the Card Acceptor as given in the related card transaction.
+          allOf:
+            - $ref: '#/components/schemas/address'
+        cardAcceptorPhone:
+          description: |
+            Merchant phone number
+          allOf:
+            - $ref: '#/components/schemas/PhoneNumber'
+        merchantCategoryCode:
+          description: |
+            Merchant Category Code of the Card Acceptor as given in the related card transaction. 
+          allOf:
+            - $ref: '#/components/schemas/MerchantCategoryCode'
+        maskedPAN:
+          description: |
+            The masked PAN of the card used in the transaction.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        transactionDetails:
+          description: |
+            Additional details given for the related card transactions.
+          allOf:
+            - $ref: '#/components/schemas/Max1000Text'
+        invoiced:
+          description: |
+            Flag indicating whether the underlying card transaction is already invoiced.
+          type: boolean
+        proprietaryBankTransactionCode:
+          description: |
+            proprietary bank transaction code as used within a community or within an ASPSP e.g. for MT94x based transaction reports
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    Max256Text:
+      type: string
+      maxLength: 256
+      example: 'Text, maximum of 256 characters.'
+    organisationIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Organisation Identification\" for more details.
+      type: object
+      properties:
+        anyBIC:
+          description: |
+            A code allocated to a business entity or to a financial institution by a Registration Authority under an international identification scheme.
+          allOf:
+            - $ref: '#/components/schemas/BICFI'
+        lei:
+          description: |
+            Legal Entity Identifier.
+          allOf:
+            - $ref: '#/components/schemas/LEI'
+        others:
+          description: |
+            Unique identification of an organisation, as assigned by an institution, using an identification scheme.
+          type: array
+          items:
+            $ref: '#/components/schemas/genericOrganisationIdentification'
+    error_NG_405_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_405_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    clientMessageInformation_403_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_403_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+    amountDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Amount Details\" for more details.
+      type: object
+      properties:
+        instructedAmount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/amountAndExchangeDetails'
+        transactionAmount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/amountAndExchangeDetails'
+        counterValueAmount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/amountAndExchangeDetails'
+        announcedPostingAmount:
+          description: |
+          allOf: 
+            - $ref: '#/components/schemas/amountAndExchangeDetails'
+      example:
+          {
+            "instructedAmount" : {
+              "currency": "DKK",
+              "amount": "123.50",
+              "sourceCurrency": "DKK",
+              "targetCurrency": "EUR",
+              "exchangeRate": "7.47"
+            },
+            "transactionAmount" : {
+              "currency": "EUR",
+              "amount": "16.53",
+              "sourceCurrency": "DKK",
+              "targetCurrency": "EUR",
+              "exchangeRate": "7.60"
+            }
+          }
+    error_NG_403_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_403_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    NamePrefixCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Name Prefix Code\" for more details.
+      type: string
+      enum:
+        - DOCT
+        - MADM
+        - MISS
+        - MIST
+        - MIKS
+      example: 'MADM'
+    standingOrderDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Standing Order Details\" for more details.
+      type: object
+      required:
+        - frequency
+      properties:
+        startDate:
+          description: |
+            The first applicable day of execution starting from this date the first payment was/will be executed.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        startDateTime:
+          description: |
+            The first applicable day and time of execution starting from this timestamp. This attribute is only applicable to instant payments. Seconds and milli seconds might be ignored by the ASPSP.
+            The ASPSP might restrict the implementation to startDate. This restriction will be part of the ASPSP documentation.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        endDate:
+          description: |
+            The last applicable day of execution
+            If not given, it is an infinite standing order.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        endDateTime:
+          description: |
+            The last applicable day and time of requested execution. This attribute is only applicable to instant payments.
+            If none of the attributes is given, it is an infinite standing order.
+            The ASPSP might restrict the implementation to endDate. This restriction will be part of the ASPSP documentation.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        executionRule:
+          description: |
+            \"following\" or \"preceding\" supported as values.
+            This data attribute defines the behavior when a transaction date resulting from a standing order falls on a weekend or bank holiday.
+            The payment is then executed either the \"preceding\" or \"following\" working day.
+          type: string
+        withinAMonthFlag:
+          description: |
+            This element is only used in case of frequency equals \"Monthly\".
+            If this element equals false it has no effect. If this element equals true,
+            then the execution rule is overruled if the day of execution would fall into a different month using the execution rule.
+            Example: executionRule equals \"preceding\", dayOfExecution equals \"02\" and the second of a month is a Sunday.
+            In this case, the transaction date would be on the last day of the month before.
+            This would be overruled if withinAMonthFlag equals true and the payment is processed on Monday the third of the Month.
+            Remark: This attribute is rarely supported in the market.
+          type: boolean
+        frequency:
+          description: |
+            The frequency of the recurring payment resulting from this standing order.
+          allOf:
+            - $ref: '#/components/schemas/EventFrequencyCode'
+        monthsOfExecution:
+          description: |
+            The format is following the regular expression \d{1,2}. The array is restricted to 11 entries.
+            The values contained In the array entries shall all be different and the maximum value of one entry is 12.
+            This attribute is contained if and only if the frequency equals \"MonthlyVariable\".
+            Example: An execution on January, April and October each year is addressed by [\"1\". \"4\", \"10\"].
+          type: array
+          items:
+            $ref: '#/components/schemas/Max2Text'
+        multiplicator:
+          description: |
+            This is multiplying the given frequency resulting the exact frequency, e.g.
+            Frequency=weekly and multiplicator=3 means every 3 weeks.
+            Remark: This attribute is rarely supported in the market.
+          type: number
+        dayOfExecution:
+          description: |
+            \"31\" is ultimo.
+            The format is following the regular expression \d{1,2}.
+            Example: The first day is addressed by \"1\".
+            The date is referring to the time zone of the ASPSP.
+          allOf:
+            - $ref: '#/components/schemas/Max2Text'
+        limitAmount:
+          description: |
+            limitAmount
+            Amount limit for fund skimming, e.g. skim all funds above this limit to savings account, i.e. typically a specific periodic
+            payments with fixed remaining amount rather than fixed transaction amount. Amount may be zero as well as below zero, i.e. negative.
+            Constraints: transactionAmount needs to be zero and bankTransactionCode needs to specify \"PMNT-MCOP-OTHR\" for fund skimming.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+    BICFI:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}'
+      example: 'ECBFDEFFFIM'
+    Max140Text:
+      type: string
+      maxLength: 140
+      example: 'Text, maximum of 140 characters.'
+    PersonIdentificationCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - ARNU
+        - CCPT
+        - CUST
+        - DRLC
+        - EMPL
+        - NIDN
+        - SOSE
+        - TELE
+        - TXID
+        - POID
+      example: 'NIDN'
+    address:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Address\" for more details.
+      type: object
+      required:
+        - country
+      properties:
+        streetName:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        buildingNumber:
+          description: |
+          type: string
+        townName:
+          description: |
+          type: string
+        postCode:
+          description: |
+          type: string
+        country:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/CountryCode'
+    ProxyAccountTypeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - TELE
+        - EMAL
+        - DNAM
+        - CINC
+        - COTX
+        - COID
+        - CUST
+        - DRLC
+        - EIDN
+        - EWAL
+        - PVTX
+        - LEIC
+        - MBNO
+        - NIDN
+        - CCPT
+        - SHID
+        - SOSE
+        - TOKN
+        - UBIL
+        - VIPN
+        - BIID
+      example: 'EMAL'
+    MessageCode_ServiceUnspecific_409:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      enum: 
+          - STATUS_INVALID
+          - CHANGE_INVALID
+      example: 'STATUS_INVALID'
+    accountReport:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Account Report\" for more details.
+      type: object
+      required:
+        - _links
+      properties:
+        booked:
+          description: |
+            Shall be contained if bookingStatus parameter is set to \"booked\", \"both\" or \"all\".
+          type: array
+          items:
+            $ref: '#/components/schemas/transactions'
+        pending:
+          description: |
+            Not contained if the bookingStatus parameter is set to \"booked\" or \"information\".
+          type: array
+          items:
+            $ref: '#/components/schemas/transactions'
+        information:
+          description: |
+            Only contained if the bookingStatus is set to \"information\" or \"all\" and if supported by ASPSP.
+          type: array
+          items:
+            $ref: '#/components/schemas/transactions'
+        _links:
+          description: |
+            The following links might be used within this context:
+            * account (mandatoryin the context of cash accounts)
+            * savingsAccount (mandatory in the context of savings accounts)
+            * loanAccount (mandatory in the context of loan accounts)
+            * first (optional)
+            * next (optional)
+            * previous (optional)
+            * last (optional)
+          allOf:
+            - $ref: '#/components/schemas/links'
+    SecuritiesFeeTypeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Securities Fee Type Code\" for more details.
+      type: string
+      enum:
+        - transactionFee
+        - brokerageFee
+        - managementFee
+        - courtage
+        - custodyFee
+        - exchangeFee
+        - thirdPartyFee
+        - otherFee
+      example: 'otherFee'
+    clientMessageInformation_401_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_401_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+    FinancialInstitutionIdentificationCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+    MessageCode_401_AIS: 
+      description: Message codes defined for AIS for HTTP Error code 401 (UNAUTHORIZED).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_401'
+        - $ref: '#/components/schemas/MessageCode_AisSpecific_401'
+    MessageCode_ServiceUnspecific_405:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - SERVICE_INVALID
+      example: 'SERVICE_INVALID'
+    ISODate:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      format: date
+      example: '2020-01-01'
+    MessageCode_ServiceUnspecific_404:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - RESOURCE_UNKNOWN
+      example: 'RESOURCE_UNKNOWN'
+    BBAN:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[a-zA-Z0-9]{1,30}' 
+      example: 'BARC12345612345678'
+    MessageCode_ServiceUnspecific_403:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - SERVICE_BLOCKED
+        - CONSENT_UNKNOWN
+        - RESOURCE_UNKNOWN
+        - RESOURCE_EXPIRED
+      example: 'SERVICE_BLOCKED'
+    MessageCode_ServiceUnspecific_401:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - CERTIFICATE_INVALID
+        - ROLE_INVALID
+        - CERTIFICATE_EXPIRED
+        - CERTIFICATE_BLOCKED
+        - CERTIFICATE_REVOKED
+        - CERTIFICATE_MISSING
+        - CLIENT_INVALID
+        - CLIENT_INCONSISTENT
+        - API_CONTRACT_ID_INVALID
+        - SIGNATURE_INVALID
+        - SIGNATURE_MISSING
+        - ROLE_INVALID
+        - PSU_CREDENTIALS_INVALID
+        - CORPORATE_ID_INVALID
+        - CONSENT_INVALID
+        - CONSENT_EXPIRED
+        - TOKEN_UNKNOWN
+        - TOKEN_INVALID
+        - TOKEN_EXPIRED
+      example: 'CERTIFICATE_INVALID'
+    MessageCode_ServiceUnspecific_400:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - FORMAT_ERROR
+        - PARAMETER_NOT_CONSISTENT
+        - PARAMETER_NOT_SUPPORTED
+        - SERVICE_INVALID
+        - CONSENT_UNKNOWN
+        - RESOURCE_UNKNOWN
+        - RESOURCE_EXPIRED
+        - RESOURCE_BLOCKED
+        - TIMESTAMP_INVALID
+        - PERIOD_INVALID
+        - SCA_METHOD_UNKNOWN
+        - SCA_INVALID
+      example: 'FORMAT_ERROR'
+    error_NG_401_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_401_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    PhoneNumber:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '\+[0-9]{1,3}-[0-9()+\-]{1,30}'
+      example: '+44-113-496-0000'
+    securitiesAccountFee:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Securities Account Fee\" for more details.
+      type: object
+      required:
+        - feeRules
+      properties:
+        typeCode:
+          description: |
+            Type of the fee as a code.
+            Might be adjusted in the future based on market experience.
+          allOf:
+            - $ref: '#/components/schemas/SecuritiesFeeTypeCode'
+        typeProprietary:
+          description: |
+            Type of the fee as a proprietary string.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        feeRules:
+          description: |
+            Array of fee rules. Each rule represents ow the amount of the fee is determined either explicitly by stating the amount or implicitly by providing a percentage, minimum and maximum amount.
+            This array will usually only contain one entry to represent the whole rule. Only in the case of the fee being calculated as a tiered percentage, 
+            several entries are included to represent the several tiers of the fee rule.
+          type: array
+          items: 
+            $ref: '#/components/schemas/securitiesAccountFeeRule'
+        applicableFrom:
+          description: |
+            First date, when this fee is applicable.
+            If not present, the fee is applicable starting with the creation of this account / the latest reporting date supported by the ASPSP.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        applicableTo:
+          description: |
+            Last date, when this fee is applicable. If not present, the fee is applicable indefinitely.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        additionalInformation:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+    Max4Text:
+      type: string
+      maxLength: 4
+      example: '4CHR'
+    referredDocumentInformation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Referred Document Information\" for more details.
+      type: object
+      properties:
+        typeCode:
+          description: |
+            Specifies the type of referred document, provided as code.
+          allOf:
+            - $ref: '#/components/schemas/ReferredDocumentTypeCode'
+        typeProprietary:
+          description: |
+            Specifies the type of referred document, provided in proprietary encoding.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        typeIssuer:
+          description: |
+            Issuer of the document type.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        number:
+          description: |
+            Unique and unambiguous identification of the referred document.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        relatedDate:
+          description: |
+            Date associated with the referred document.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+    paymentContextType:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Payment Context Type\" for more details.
+      type: object
+      properties:
+        cardPresent:
+          description: |
+          type: boolean
+        cardDataEntryMode:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/CardDataEntryMode'
+    PreferredMethod:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Preferred Method\" for more details.
+      type: string
+      enum:
+        - LETT
+        - MAIL
+        - PHON
+        - FAXX
+        - CELL
+      example: 'MAIL'
+    error_NG_400_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_400_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    MessageCode_404_AIS: 
+      description: Message codes defined for AIS for HTTP Error code 404 (NOT FOUND).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_404'
+        - $ref: '#/components/schemas/MessageCode_AisSpecific_404'
+    TransactionStatus:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Transaction Status\" for more details.
+      type: string
+      enum:
+        - ACCC
+        - ACCP
+        - ACSC
+        - ACSP
+        - ACTC
+        - ACWC
+        - ACWP
+        - RCVD
+        - PDNG
+        - RJCT
+        - CANC
+        - ACFC
+        - PATC
+        - PART
+        - PRES
+        - RVCM
+        - RVNC
+        - RCVC
+      example: 'ACCC'
+    error_NG_409_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_409_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    Max70Text:
+      type: string
+      maxLength: 70
+      example: 'Text, maximum of 70 characters.'
+    BalanceType:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Balance Type\" for more details.
+      type: string
+      enum:
+        - closingBooked
+        - expected
+        - openingBooked
+        - interimAvailable
+        - interimBooked
+        - forwardAvailable
+        - nonInvoiced
+      example: 'closingBooked'
+    links:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Links\" for more details.
+      type: object
+      properties:
+        scaRedirect:
+          description: |
+            A link to an ASPSP site where SCA is performed within the Redirect SCA approach.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        scaOAuth:
+          description: |
+            The link refers to a JSON document specifying the OAuth details of the ASPSP's authorisation server. JSON document follows the definition given in [RFC 8414].
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        confirmation:
+          description: |
+            \"confirmation\": Might be added by the ASPSP if either the \"scaRedirect\" or \"scaOAuth\" hyperlink is returned in the same response message. 
+            This hyperlink defines the URL to the resource which needs to be updated with 
+            * a confirmation code as retrieved after the plain redirect authentication process with the ASPSP authentication server or
+            * an access token as retrieved by submitting an authorization code after the integrated Oauth based authentication process with the ASPSP authentication server.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        creditorNameConfirmation:
+          description: |
+            A link to an endpoint, where the submitted payment needs to be confirmed explicitly for execution after a verification of payee process has detected a deviation in the creditor account/creditor name pair.
+            If this hyperlink is provided, the addressed payment will not be executed without a related confirmation.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisation:
+          description: |
+            A link to an endpoint, where the authorisation of a transaction or the authorisation of a transaction cancellation shall be started with a POST command. 
+            No specific data is needed for this process start.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuIdentification:
+          description: |
+            The link to an endpoint where the authorisation of a transaction or of a transaction cancellation shall be started, where PSU identification shall be uploaded 
+            with the corresponding call.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        updatePsuIdentification:
+          description: |
+            The link to the payment initiation or account information resource, which needs to be updated by the PSU identification if not delivered yet.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithProprietaryData:
+          description: |
+            A link to the endpoint, where the authorisation of a transaction or of a transaction cancellation shall be started, and where proprietary data needs to be updated with this call. 
+            The TPP can find the scope of missing proprietary data in the ASPSP documentation.
+            The usage of this hyperlink is not further specified in the specification but is used analogously to e.g. the startAuthorisation withPsuIdentification hyperlink.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        updateProprietaryData:
+          description: |
+            The link to the payment initiation or account information resource, which needs to be updated by the proprietary data.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuAuthentication:
+          description: |
+            The link to an endpoint where the authorisation of a transaction or of a transaction cancellation shall be started, where PSU authentication data shall be uploaded 
+            with the corresponding call.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        updatePsuAuthentication:
+          description: |
+            The link to the payment initiation or account information resource, which needs to be updated by a PSU password and eventually the PSU identification if not delivered yet. 
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithEncryptedPsuAuthentication:
+          description: |
+            The link to an endpoint where the authorisation of a transaction or of a transaction cancellation shall be started, where encrypted PSU authentication data shall be uploaded 
+            with the corresponding call.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        updateEncryptedPsuAuthentication:
+          description: |
+            The link to the payment initiation or account information resource, which needs to be updated by an encrypted PSU password and eventually the PSU identification if not delivered yet. 
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithAuthenticationMethodSelection:
+          description: |
+            This is a link to and endpoint where the authorisation of a transaction or of a transaction cancellation shall be started, 
+            where the selected SCA method shall be uploaded  with the corresponding call.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        selectAuthenticationMethod:
+          description: |
+            This is a link to a resource, where the TPP can select the applicable second factor authentication methods for the PSU, if there were several available authentication methods. 
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithTransactionAuthorisation:
+          description: |
+            A link to an endpoint, where an authorisation of a transaction or a cancellation can be started, and where the response data for the challenge is uploaded in the same call for the 
+            transaction authorisation or transaction cancellation at the same time in the Embedded SCA Approach.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        authoriseTransaction:
+          description: |
+            The link to the payment initiation or consent resource, where the \"Transaction Authorisation\"Request\" is sent to. This is the link to the resource which will authorise the payment or the consent by 
+            checking the SCA authentication data within the Embedded SCA approach.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        updateResourceByDebtorAccountResource:
+          description: |
+            A link to a payment related resource which needs to be updated by an account, referenced by a resource identification.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        self:
+          description: |
+            The link to the payment initiation resource created by the request itself. 
+            This link can be used later to retrieve the transaction status of the payment initiation.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        status:
+          description: |
+            A link to retrieve the status of the transaction resource.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        transactionfees:
+          description: |
+            The link is to the status resource.  
+            This link is only added within the authorisation process in case fee information is available via the status resource.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        scaStatus:
+          description: |
+            A link to retrieve the status of the authorisation or cancellation-authorisation sub-resource.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        account:
+          description: |
+            A link to the resource providing the details of one account
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        savingsAccount:
+          description: |
+            A link to the resource providing the details of a savings account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        loanAccount:
+          description: |
+            A link to the resource providing the details of a loan account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        balances:
+          description: |
+            A link to the resource providing the balance of a dedicated account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        transactions:
+          description: |
+            A link to the resource providing the transaction history of a dedicated account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        cardAccount:
+          description: |
+            A link to the resource providing the details of one card account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        cardTransactions:
+          description: |
+            A link to the resource providing the transaction history of a dedicated card account.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        transactionDetails:
+          description: |
+            A link to the resource providing details of a dedicated transaction.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        ibanCheck:
+          description: |
+            A link to the endpoint offering the addressed iban check result.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        paymentInitiation:
+          description: |
+            A link to an initiation related to a payment resource.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        securitiesAccount:
+          description: |
+            A link to the resource providing the details of one securitiesAccount.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        positions:
+          description: |
+            A link to the resource providing the list of positions of one securitiesAccount.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        orders:
+          description: |
+            A link to the resource providing the list of orders of one securitiesAccount.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        orderDetails:
+          description: |
+            A link to the resource providing details of one specific order.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        relatedOrders:
+          description: |
+            An array of links to request order details of related orders related to the order that is represented by the data structure containing this element 
+            (e.g. other orders that originated from the same order split as this order). 
+          type: array
+          items:
+            $ref: '#/components/schemas/hrefType'
+        relatedTransactions:
+          description: |
+            An array of links to request securities transaction details of transactions that resulted from this order.
+          type: array
+          items:
+            $ref: '#/components/schemas/hrefType'
+        subscription:
+          description: |
+            A link to the resource providing the details of a subscription for Push AIS Services.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        entryStatusRevoked:
+          description: |
+            Links to entry endpoints where the entry status is revoked.
+          type: array
+          items:
+            $ref: '#/components/schemas/hrefType'
+        first:
+          description: |
+            Navigation link for paginated account reports.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        next:
+          description: |
+            Navigation link for paginated account reports.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        previous:
+          description: |
+            Navigation link for paginated account reports.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        last:
+          description: |
+            Navigation link for paginated account reports.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        download:
+          description: |
+            Download link for huge AIS data packages.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        confirmInitiation:
+          description: |
+            link to a confirmation endpoint, where a payment initiation needs to be confirmed explicitly by the API Client for execution.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        aspspParameters:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        aspspContacts:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        aspspDowntimes:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        onboardings:
+          description: |
+            A link to commercially onboard to the related API, see openFinance, Admin Services for more details.
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        readConditions:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+        confirmConditions:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/hrefType'
+    partyDescription:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Party Description\" for more details.
+      type: object
+      properties:
+        name:
+          description: |
+            Name of the party.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        postaladdress:
+          description: |
+            Postal Address of the party.
+          allOf:
+            - $ref: '#/components/schemas/postalAddress'
+        identification:
+          description: |
+            Identification of the party.
+          allOf:
+            - $ref: '#/components/schemas/partyIdentification'
+        additionalPartyInformation:
+          description: |
+            Only supported in extended services for creditor related parties, if at all.
+            *NOTE:* This information will be neither put to the related interbank payment nor to account reports/statements and 
+            might only be used to display related information to the PSU during potential authorisation processes.
+          allOf:
+            - $ref: '#/components/schemas/additionalPartyInformation'
+    genericFinancialInstitutionIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Generic Financial Institution Identification\" for more details.
+      type: object
+      required:
+        - identification
+      properties:
+        identification:
+          description: |
+            Unique and unambiguous identification of a financial insitution.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        schemeNameCode:
+          description: |
+            An entry provided by an external ISO code list
+          allOf:
+            - $ref: '#/components/schemas/FinancialInstitutionIdentificationCode'
+        schemeNameProprietary:
+          description: |
+            A scheme name defined in a proprietary way.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        issuer:
+          description: |
+            Issuer of the identification
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    UUID:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      format: uuid
+      example: '99435c7e-ad88-49ec-a2ad-99ddcb1f5555'
+    error_RFC7807_404_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_404_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_404_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    error_RFC7807_400_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_400_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_400_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    clientMessageInformation_405_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_405_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+    Max16Text:
+      type: string
+      maxLength: 16
+      example: '16 Chars at most'
+    ClearingSystemIdentificationCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more detail
+      type: string
+      enum:
+        - ATBLZ
+        - AUBSB
+        - CACPA
+        - CHBCC
+        - CHSIC
+        - CNAPS
+        - DEBLZ
+        - ESNCC
+        - GBDSC
+        - GRBIC
+        - HKNCC
+        - IENCC
+        - INFSC
+        - ITNCC
+        - JPZGN
+        - NZNCC
+        - PLKNR
+        - PTNCC
+        - RUCBC
+        - SESBA
+        - SGIBG
+        - THCBC
+        - TWNCC
+        - USABA
+        - USPID
+        - ZANCC
+        - NZRSA
+        - MZBMO
+        - CNCIP
+        - KRBOK
+      example: 'DEBLZ'
+    accountOwner:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Account Owner\" for more details.
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: |
+            Account owner name
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        role:
+          description: |
+            The following proprietary codes are used:
+            \"owner\", \"legalRepresentative\", \"authorisedUser\".
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        postalAddress:
+          description: |
+            Information that locates and identifies a specific address, as defined by postal services.
+          allOf:
+            - $ref: '#/components/schemas/postalAddress'
+        identification:
+          description: |
+            Unique and unambiguous identification of a party
+          allOf:
+            - $ref: '#/components/schemas/partyIdentification'
+        countryOfResidence:
+          description: |
+            Country in which a person resides. In case of a company, it is the country from which the affairs of that company are directed.
+            Constraints: The code is checked against the list of country names obtained from the United Nations (ISO 3166 Alpha-2 code).
+          allOf:
+            - $ref: '#/components/schemas/CountryCode'
+        contactDetails:
+          description: |
+            Set of elements used to indicated how to contact the party.
+          allOf:
+            - $ref: '#/components/schemas/contactDetails'
+    securitiesAccountFeeRule:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Securities Account Fee Rule\" for more details.
+      type: object
+      properties:
+        amount:
+          description: |
+            Amount of the fee.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        percentage:
+          description: |
+            Percentage of the fee. Up to 20 significant figures. The decimal separator is a dot.
+            Trailing zeroes must be truncated.Fee as a percentage.
+          type: string
+          pattern: '-?[0-9]{1,20}(\.[0-9]{0,19})?'
+        fromBaseAmount:
+          description: |
+            To be used for fees where a tiered percentage is used to calculate the fee relative to an implicitly defined base amount (such as a transaction's volume being the base amount for a courtage).
+            The range of one tier is defined as all applicable entities with base amounts X and 
+            fromBaseAmount \u2264 X \u2264 toBaseAmount.
+            In any array of fee rules, only one of these entries may be missing the \"fromBaseAmount\" element (indicating that the rule represented by this entry is used without 
+            a lower bound to the base amount) and only one entry may be missing the \"toBaseAmount\" element (indicating that the rule represented by this entry is applied without an 
+            upper limit to the base amount). In cases, where the fee is not calculated as a tiered percentage, only one entry in array \"feeRules\" is included. 
+            This entry must be missing both subelements \"fromBaseAmount\" and \"toBaseAmount\".
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        toBaseAmount:
+          description: |
+            To be used for fees where a tiered percentage is used to calculate the fee relative to an implicitly defined base amount (such as a transaction's volume being the base amount for a courtage).
+            The range of one tier is defined as all applicable entities with base amounts X and 
+            fromBaseAmount \u2264 X \u2264 toBaseAmount.
+            In any array of fee rules, only one of these entries may be missing the \"fromBaseAmount\" element (indicating that the rule represented by this entry is used without 
+            a lower bound to the base amount) and only one entry may be missing the \"toBaseAmount\" element (indicating that the rule represented by this entry is applied without an 
+            upper limit to the base amount). In cases, where the fee is not calculated as a tiered percentage, only one entry in array \"feeRules\" is included. 
+            This entry must be missing both subelements \"fromBaseAmount\" and \"toBaseAmount\".
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        minimumAmount:
+          description: |
+            Minimum amount of the fee in each billing period / for each billed event if applicable.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        maximumAmount:
+          description: |
+            Maximum amount of the fee in each billing / for each billed event period if applicable.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+    userEntry:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"User Entry\" for more details.
+      type: object
+      required:
+        - user
+        - dateTime
+      properties:
+        user:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        dateTime:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+    CardTransactionType:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Card Transaction Type\" for more details.
+      type: string
+      enum:
+        - AGGR
+        - DCCV
+        - GRTT
+        - INSP
+        - LOYT
+        - NRES
+        - PUCO
+        - RECP
+        - SOAF
+        - UNAF
+        - VCAU
+      example: 'ECTL'
+    accountRelatedDates:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Account related Dates\" for more details.
+      type: object
+      properties:
+        contractStartDate:
+          description: |
+            Start of the account contract.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        contractEndDate:
+          description: |
+            End of the account contract.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        contractAvailabilityDate:
+          description: |
+            Next Date where money can be taken off a saving account without loss of interest, if initiated now (in case of a saving account).
+            Next Date where a loan can be fully repaid without any extra fee.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+    amountAndExchangeDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Amount and Exchange Details\" for more details.
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          description: |
+            ISO 4217 Alpha 3 currency code
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        amount:
+          description: |
+            The amount given with fractional digits, where fractions must be compliant to the currency definition. Up to 14 significant figures. Negative amounts are signed by minus.
+            The decimal separator is a dot.
+            Example: Valid representations for EUR with up to two decimals are:
+            * 1056
+            * 5768.2
+            * -1.50
+            * 5877.78
+          type: string
+          pattern: '-?[0-9]{1,14}(\.[0-9]{1,3})?'
+        sourceCurrency:
+          description: |
+            Currency from which an amount is to be converted in a currency conversion.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        exchangeRate:
+          description: |
+            Factor used to convert an amount from one currency into another. This reflects the price at which one currency was bought with another currency. 
+            Note: If this field is present, then also the field sourceCurrency must be provided.
+          type: string
+        unitCurrency:
+          description: |
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1EUR = xxxCUR, the unit currency is EUR.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        targetCurrency:
+          description: |
+            Currency into which an amount is to be converted in a currency conversion.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        quotationDate:
+          description: |
+            Date at which an exchange rate is quoted.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        contractId:
+          description: |
+            Unique identification to unambiguously identify the foreign exchange contract.
+          type: string
+    postalAddress:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Postal Address (Either Structured or Unstructured Address)\" for more details.
+      type: object
+      properties:
+        addressLines:
+          description: |
+            At most seven entries are permitted. May only be used, if none of the structured address elements \"streetName\", \"buildingNumber\", \"postcode\" or \"townName\" is used.
+            *Remark:* For SEPA transactions this is further restricted to a maximum of 1 entry.
+          type: array
+          maxItems: 7
+          items:
+            $ref: '#/components/schemas/Max140Text'
+        department:
+          description: |
+            Identification of a division of a large organisation or building.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        subDepartment:
+          description: |
+            Identification of a sub-division of a large organisation or building.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        streetName:
+          description: |
+            Name of a street or thoroughfare.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        buildingNumber:
+          description: |
+            Number that identifies the position of a building on a street.
+          allOf:
+            - $ref: '#/components/schemas/Max16Text'
+        buildingName:
+          description: |
+            Name of the building or house.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        floor:
+          description: |
+            Floor or storey within a building.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        postBox:
+          description: |
+            Numbered box in a post office, assigned to a person or organisation, where letters are kept until called for.
+          allOf:
+            - $ref: '#/components/schemas/Max16Text'
+        room:
+          description: |
+            Building room number.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        postCode:
+          description: |
+            Identifier consisting of a group of letters and/or numbers that is added to a postal address to assist the sorting of mail.
+          allOf:
+            - $ref: '#/components/schemas/Max16Text'
+        townName:
+          description: |
+            Name of a built-up area, with defined boundaries, and a local government. 
+            *Usage Rule:* If address lines are not used, this attribute is mandatrory.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        townLocationName:
+          description: |
+            Specific location name within the town.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        districtName:
+          description: |
+            Identifies a subdivision within a country sub-division.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        countrySubDivision:
+          description: |
+            Identifies a subdivision of a country such as state, region, county.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        country:
+          description: |
+            Nation with its own government.
+            *Usage Rule:* If address lines are not used, this attribute is mandatrory.
+          allOf:
+            - $ref: '#/components/schemas/CountryCode'
+    personIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Person Identification\" for more details.
+      type: object
+      required:
+        - identification
+      properties:
+        identification:
+          description: |
+            Unique and unambiguous identification of a oersib.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        schemeNameCode:
+          description: |
+            An entry provided by an external ISO code list
+          allOf:
+            - $ref: '#/components/schemas/PersonIdentificationCode'
+        schemeNameProprietary:
+          description: |
+            A scheme name defined in a proprietary way.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        issuer:
+          description: |
+            Issuer of the identification
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    rtpDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"RTP Details\" for more details.
+      type: object
+      required:
+        - requestedExpiryDateTime
+      properties:
+        paymentConditions:
+          description: |
+            Conditions for the execution of the payment.
+          allOf:
+            - $ref: '#/components/schemas/paymentConditions'
+        creationDateTime:
+          description: |
+            creationDateTime of the originator
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        requestedExpiryDateTime:
+          description: |
+            Date and Time at which this request expires.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        originatorPspId:
+          description: |
+            Originator payment service provider in case of indirect participation regarding a related API Access Scheme or bilateral contract
+          allOf:
+            - $ref: '#/components/schemas/financialInstitutionIdentification'
+    AccountIdentificationCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum: 
+        - AIIN
+        - BBAN
+        - CUID
+        - UPIC
+      example: 'AIIN'
+    clearingSystemMemberIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Clearing System Member Identification\" for more details.
+      type: object
+      properties:
+        memberId:
+          description: |
+            Identification of a member of a clearing system.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        clearingSystemIdentificationCode:
+          description: |
+            Identification of a clearing system, in a coded form as published in an external list.
+          allOf:
+            - $ref: '#/components/schemas/ClearingSystemIdentificationCode'
+        clearingSystemIdentificationProprietary:
+          description: |
+            Identification code for a clearing system, that has not yet been identified in the list of clearing systems.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    MessageCode_409_AIS: 
+      description: |
+        Message codes defined for AIS for HTTP Error code 409 (CONFLICT).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_409'
+    _links_200_AISACCOUNTTXLIST: 
+      type: object
+      additionalProperties: 
+        $ref: '#/components/schemas/hrefType'
+      properties:
+        download:
+          $ref: '#/components/schemas/hrefType'
+    additionalPartyInformation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Additional Party Information\" for more details.
+      type: object
+      properties:
+        tradeName:
+          description: |
+            Trade name of the related party. For display to the PSU only.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        merchantCategoryCode:
+          description: |
+            Merchant Category Code as assigned by ISO:
+          allOf:
+            - $ref: '#/components/schemas/MerchantCategoryCode'
+        logoURL:
+          description: |
+            A hyperlink to the logo of the party.
+          allOf:
+            - $ref: '#/components/schemas/Max2048Text'
+        geoLocation:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/GeoLocation'
+    agentDescription1:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Agent Description1\" for more details.
+      type: object
+      required:
+        - financialInstitutionId
+      properties:
+        financialInstitutionId:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/financialInstitutionIdentification'
+    MessageCode_400_AIS: 
+      description: Message codes defined for AIS for HTTP Error code 400 (BAD_REQUEST).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_400'
+        - $ref: '#/components/schemas/MessageCode_AisSpecific_400'
+    PurposeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - BKDF
+        - BKFE
+        - BKFM
+        - BKIP
+        - BKPP
+        - CBLK
+        - CDCB
+        - CDCD
+        - CDCS
+        - CDDP
+        - CDOC
+        - CDQC
+        - ETUP
+        - FCOL
+        - MTUP
+        - ACCT
+        - CASH
+        - COLL
+        - CSDB
+        - DEPT
+        - INTC
+        - INTP
+        - LIMA
+        - NETT
+        - BFWD
+        - CCIR
+        - CCPC
+        - CCPM
+        - CCSM
+        - CRDS
+        - CRPR
+        - CRSP
+        - CRTL
+        - EQPT
+        - EQUS
+        - EXPT
+        - EXTD
+        - FIXI
+        - FWBC
+        - FWCC
+        - FWSB
+        - FWSC
+        - MARG
+        - MBSB
+        - MBSC
+        - MGCC
+        - MGSC
+        - OCCC
+        - OPBC
+        - OPCC
+        - OPSB
+        - OPSC
+        - OPTN
+        - OTCD
+        - REPO
+        - RPBC
+        - RPCC
+        - RPSB
+        - RPSC
+        - RVPO
+        - SBSC
+        - SCIE
+        - SCIR
+        - SCRP
+        - SHBC
+        - SHCC
+        - SHSL
+        - SLEB
+        - SLOA
+        - SWBC
+        - SWCC
+        - SWPT
+        - SWSB
+        - SWSC
+        - TBAS
+        - TBBC
+        - TBCC
+        - TRCP
+        - AGRT
+        - AREN
+        - BEXP
+        - BOCE
+        - COMC
+        - CPYR
+        - GDDS
+        - GDSV
+        - GSCB
+        - LICF
+        - MP2B
+        - POPE
+        - ROYA
+        - SCVE
+        - SERV
+        - SUBS
+        - SUPP
+        - TRAD
+        - CHAR
+        - COMT
+        - MP2P
+        - ECPG
+        - ECPR
+        - ECPU
+        - EPAY
+        - CLPR
+        - COMP
+        - DBTC
+        - GOVI
+        - HLRP
+        - HLST
+        - INPC
+        - INPR
+        - INSC
+        - INSU
+        - INTE
+        - LBRI
+        - LIFI
+        - LOAN
+        - LOAR
+        - PENO
+        - PPTI
+        - RELG
+        - RINP
+        - TRFD
+        - FORW
+        - FXNT
+        - ADMG
+        - ADVA
+        - BCDM
+        - BCFG
+        - BLDM
+        - BNET
+        - CBFF
+        - CBFR
+        - CCRD
+        - CDBL
+        - CFEE
+        - CGDD
+        - CORT
+        - COST
+        - CPKC
+        - DCRD
+        - DSMT
+        - DVPM
+        - EDUC
+        - FACT
+        - FAND
+        - FCPM
+        - FEES
+        - GIFT
+        - GOVT
+        - ICCP
+        - IDCP
+        - IHRP
+        - INSM
+        - IVPT
+        - MCDM
+        - MCFG
+        - MSVC
+        - NOWS
+        - OCDM
+        - OCFG
+        - OFEE
+        - OTHR
+        - PADD
+        - PTSP
+        - RCKE
+        - RCPT
+        - REBT
+        - REFU
+        - RENT
+        - REOD
+        - RIMB
+        - RPNT
+        - RRBN
+        - RRCT
+        - RRTP
+        - RVPM
+        - SLPI
+        - SPLT
+        - STDY
+        - TBAN
+        - TBIL
+        - TCSC
+        - TELI
+        - TMPG
+        - TPRI
+        - TPRP
+        - TRNC
+        - TRVC
+        - WEBI
+        - IPAY
+        - IPCA
+        - IPDO
+        - IPEA
+        - IPEC
+        - IPEW
+        - IPPS
+        - IPRT
+        - IPU2
+        - IPUW
+        - ANNI
+        - CAFI
+        - CFDI
+        - CMDT
+        - DERI
+        - DIVD
+        - FREX
+        - HEDG
+        - INVS
+        - PRME
+        - SAVG
+        - SECU
+        - SEPI
+        - TREA
+        - UNIT
+        - FNET
+        - FUTR
+        - ANTS
+        - CVCF
+        - DMEQ
+        - DNTS
+        - HLTC
+        - HLTI
+        - HSPC
+        - ICRF
+        - LTCF
+        - MAFC
+        - MARF
+        - MDCS
+        - VIEW
+        - CDEP
+        - SWFP
+        - SWPP
+        - SWRS
+        - SWUF
+        - ADCS
+        - AEMP
+        - ALLW
+        - ALMY
+        - BBSC
+        - BECH
+        - BENE
+        - BONU
+        - CCHD
+        - COMM
+        - CSLP
+        - GFRP
+        - GVEA
+        - GVEB
+        - GVEC
+        - GVED
+        - GWLT
+        - HREC
+        - PAYR
+        - PEFC
+        - PENS
+        - PRCP
+        - RHBS
+        - SALA
+        - SPSP
+        - SSBE
+        - LBIN
+        - LCOL
+        - LFEE
+        - LMEQ
+        - LMFI
+        - LMRK
+        - LREB
+        - LREV
+        - LSFL
+        - ESTX
+        - FWLV
+        - GSTX
+        - HSTX
+        - INTX
+        - NITX
+        - PTXP
+        - RDTX
+        - TAXS
+        - VATX
+        - WHLD
+        - TAXR
+        - B112
+        - BR12
+        - TLRF
+        - TLRR
+        - AIRB
+        - BUSB
+        - FERB
+        - RLWY
+        - TRPT
+        - CBTV
+        - ELEC
+        - ENRG
+        - GASB
+        - NWCH
+        - NWCM
+        - OTLC
+        - PHON
+        - UBIL
+        - WTER
+        - BOND
+        - CABD
+        - CAEQ
+        - CBCR
+        - DBCR
+        - DICL
+        - EQTS
+        - FLCR
+        - EFTC
+        - EFTD
+        - MOMA
+        - RAPI
+        - GAMB
+        - LOTT
+        - AMEX
+        - SASW
+        - AUCO
+        - PCOM
+        - PDEP
+        - PLDS
+        - PLRF
+        - GAFA
+        - GAHO
+        - CPEN
+        - DEPD
+        - RETL
+        - DEBT
+      example: 'OTHR'
+    ReferredDocumentTypeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Referred Document Type Code\" for more details.
+      type: string
+      enum:
+        - MSIN
+        - CNFA
+        - DNFA
+        - CINV
+        - CREN
+        - DEBN
+        - HIRI
+        - SBIN
+        - CMCN
+        - SOAC
+        - DISP
+        - BOLD
+        - VCHR
+        - AROI
+        - TSUT
+        - PUOR
+      example: 'PUOR'
+    creditorReferenceInformation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Creditor Reference Information\" for more details.
+      type: object
+      required:
+        - reference
+      properties:
+        reference:
+          description: |
+            The actual reference.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        referenceTypeCode:
+          description: |
+            Type of the reference, provided as code.
+          allOf:
+            - $ref: '#/components/schemas/CreditorReferenceTypeCode'
+        referenceTypeProprietary:
+          description: |
+            Type of the reference, provided in proprietary encoding.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        referenceIssuer:
+          description: |
+            Issuer of the reference.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    error_RFC7807_409_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_409_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_409_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    interest:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Interest\" for more details.
+      type: object
+      required:
+        - rate
+      properties:
+        type:
+          description: |
+            Type of the interest. Currently, interests are distinguished between those with fixed rates (\"FIXD\") and those with rates derived from an index (\"INDE\").
+          allOf:
+            - $ref: '#/components/schemas/InterestTypeCode3'
+        relatedIndices:
+          description: |
+            List of indices related to the interest rate.
+          type: array
+          items:
+            $ref: '#/components/schemas/index'
+        rate:
+          description: |
+            An array of interest rates, which might apply to different amount ranges.
+          type: array
+          items:
+            $ref: '#/components/schemas/amountDependentRate'
+        fromDateTime:
+          description: |
+            The date from which this interest rate is applicable. If no exact time is applicable, 00:00:00 is chosen as time definition.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        toDateTime:
+          description: |
+            The date until this interest rate is applicable. If no exact time is applicable, 23:59:59 is chosen as time definition.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        reason:
+          description: |
+            Specifies the reason of the interest.
+            Though arbitrary text is technically supported, it is recommended to use the following keywords with pre-defined meaning:
+            * *arrears:*The addressed interest rate applies only in case of arrears.
+            * *alternateRateMaximumOf:* The addressed alternate interest rate applies in cases where this rate implies a higher interest in a dedicated interest period
+            than the regular interest rate provided without reason element.
+            * *alternateRateMinimumOf:* The addressed alternate interest rate applies in case where this rate implies a lower interest in a dedicated interest period
+            than the regular interest rate provided without reason element.
+            ASPSPs may define further keywords and shall publish them in their documentation.
+          allOf:
+                - $ref: '#/components/schemas/Max35Text'
+        changeMechanism:
+          description: |
+            An explanation of a mandated change mechanism.
+          allOf:
+            - $ref: '#/components/schemas/Max1024Text'
+    MerchantCategoryCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      maxLength: 4
+      minLength: 4
+    cardAccountDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Card Account Details\" for more details.
+      type: object
+      required:
+        - resourceId
+        - maskedPan
+        - currency
+      properties:
+        resourceId:
+          description: |
+            This is the data element to be used in the path when retrieving data from a dedicated account.
+          type: string
+        maskedPan:
+          description: |
+            Primary Account Number (PAN) of the main card in masked form..
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        currency:
+          description: |
+            Account currency
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        ownerName:
+          description: |
+            Name of the legal account owner. If there is more than one owner, then e.g. two names might be noted here.
+            For a corporate account, the corporate name is used for this attribute.
+            Even if supported by the ASPSP, the provision of this field might depend on the fact whether an explicit consent to 
+            this specific additional account information has been given by the PSU.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        name:
+          description: |
+            Name of the account, as assigned by the ASPSP, in agreement with the account owner in order to provide an additional means of identification of the account.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        displayName:
+          description: |
+            Name of the account as defined by the PSU within online channels.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        product:
+          description: |
+            Product Name of the Bank for this account, proprietary definition
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        debitAccounting:
+          description: |
+            If true, the amounts of debits on the reports are quoted positive with the related consequence for balances.
+            If false, the amount of debits on the reports are quoted negative.
+          type: boolean
+        status:
+          description: |
+            Account status. The value is one of the following:
+            * \"enabled\": account is available
+            * \"deleted\": account is terminated
+            * \"blocked\": account is blocked e.g. for legal reasons
+            If this field is not used, than the account is available in the sense of this specification.
+          type: string
+        usage:
+          description: |
+            Specifies the usage of the account
+            - PRIV: private personal account
+            - ORGA: professional account
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        details:
+          description: |
+            Specifications that might be provided by the ASPSP
+            - characteristics of the account
+            - characteristics of the relevant card
+          allOf:
+            - $ref: '#/components/schemas/Max1000Text'
+        creditLimit:
+          description: |
+            Defines the credit limit of the PSU aggregated for all cards related to this card account in total.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        balances:
+          description: |
+            The specific card account balances associated to this card accounts.
+          type: array
+          items:
+            $ref: '#/components/schemas/balance'
+        _links:
+          description: |
+            Links to the cardAccount, which can be directly used for retrieving account information from this dedicated account.
+            Links to \"balances\" and/or \"cardTransactions\"
+            These links are only supported, when the corresponding consent has been already granted.
+          allOf:
+            - $ref: '#/components/schemas/links'
+    error_NG_404_AIS: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_404_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    CreditorReferenceTypeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Creditor Reference Type Code\" for more details.
+      type: string
+      enum:
+        - RADM
+        - RPIN
+        - FXDR
+        - DISP
+        - PUOR
+        - SCOR
+      example: 'PUOR'
+    Max1000Text:
+      type: string
+      maxLength: 1000
+      example: 'Text, maximum of 1000 characters.'
+    CardDataEntryMode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Card Data Entry Mode\" for more details.
+      type: string
+      enum:
+        - CICC
+        - ECTL
+        - MGST
+        - PHYS
+        - BRCD
+      example: 'ECTL'
+    CountryCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{2}'
+      example: 'SE'
+    error_RFC7807_405_AIS: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_405_AIS'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_405_AIS'
+        _links:
+          $ref: '#/components/schemas/links'
+    amount:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Amount\" for more details.
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          description: |
+            ISO 4217 Alpha 3 currency code
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        amount:
+          description: |
+            The amount given with fractional digits, where fractions must be compliant to the currency definition. Up to 14 significant figures. Negative amounts are signed by minus.
+            The decimal separator is a dot.
+            Example: Valid representations for EUR with up to two decimals are:
+            * 1056
+            * 5768.2
+            * -1.50
+            * 5877.78
+          type: string
+          pattern: '-?[0-9]{1,14}(\.[0-9]{1,3})?'
+    reportExchangeRate:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Report Exchange Rate\" for more details.
+      type: object
+      required:
+        - sourceCurrency
+        - exchangeRate
+        - unitCurrency
+        - targetCurrency
+        - quotationDate
+      properties:
+        sourceCurrency:
+          description: |
+            Currency from which an amount is to be converted in a currency conversion.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        exchangeRate:
+          description: |
+            Factor used to convert an amount from one currency into another. This reflects the price at which one currency was bought with another currency.
+          type: string
+        unitCurrency:
+          description: |
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1EUR = xxxCUR, the unit currency is EUR.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        targetCurrency:
+          description: |
+            Currency into which an amount is to be converted in a currency conversion.
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        quotationDate:
+          description: |
+            Date at which an exchange rate is quoted.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        contractIdentification:
+          description: |
+            Unique identification to unambiguously identify the foreign exchange contract.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+    structuredAdditionalInformation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Structured Additional Information\" for more details.
+      type: object
+      properties:
+        standingOrderDetails:
+          description: |
+            Details of underlying standing orders.
+          allOf:
+            - $ref: '#/components/schemas/standingOrderDetails'
+        rtpDetails:
+          description: |
+            Details of underlying incoming RTPs
+          allOf:
+            - $ref: '#/components/schemas/rtpDetails'
+    proxyAccountIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Proxy Account Identification\" for more details.
+      type: object
+      required:
+        - identification
+      properties:
+        typeCode:
+          description: |
+            Type of the proxy identification
+          allOf:
+            - $ref: '#/components/schemas/ProxyAccountTypeCode'
+        typeProprietary:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        identification:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max2048Text'
+    structuredAdditionalTransactionInformation:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Structured Additional Transaction Information\" for more details.
+      type: object
+      required:
+        - transactionStatus
+      properties:
+        transactionStatus:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/TransactionStatus'
+        transactionCreated:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/userEntry'
+        transactionAuthorised:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/userEntry'
+        transactionCancelled:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/userEntry'
+    paymentConditions:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Payment Conditions\" for more details.
+      type: object
+      properties:
+        amountModificationAllowed:
+          description: |
+            Indicates if the debtor is allowed to pay a different amount then the requested amount.
+          type: boolean
+        earlyPaymentAllowed:
+          description: |
+            Indicates if the debtor is allowed to pay before the requested execution date.
+          type: boolean
+    ExternalLocalInstrumentCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Exchange Rate Type Code\" for more details.
+      type: string
+      enum:
+        - 0090
+        - 0091
+        - 0092
+        - 0002
+        - 0221
+        - 0224
+        - 0226
+        - 0225
+        - 0222
+        - 0227
+        - 0220
+        - 0223
+        - 0001
+        - 0000
+        - BTR
+        - CKS
+        - CTR
+        - CTP
+        - DEP
+        - FFR
+        - FFS
+        - SVC
+        - DRW
+        - DRB
+        - DRC
+        - DDMC
+        - DDMP
+        - DDMU
+        - BPA
+        - IPA
+        - TRF
+        - 82
+        - 83
+        - CPP
+        - RTR
+        - GST
+        - DDT
+        - RDD
+        - CHN
+        - STR
+        - SDD
+        - SRT
+        - SRD
+        - SCN
+        - SGT
+        - CARD
+        - 05
+        - 04
+        - ISE
+        - BSE
+        - 58
+        - 19
+        - ASTI
+        - BACP
+        - MANP
+        - SBTI
+        - 85
+        - 08
+        - 89
+        - 60
+        - RIBA
+        - RIDO
+        - RIDV
+        - IDEAL
+        - INSTNT01
+        - INSTTC01
+        - INSTIDEAL
+        - INSTNT01IDEAL
+        - INSTTC01IDEAL
+        - NLDO
+        - NLUP
+        - SDN
+        - ACCEPT
+        - ICMC
+        - NLGOV
+        - IN
+        - ONCL
+        - PERI
+        - SDCL
+        - DDNR
+        - DDFA
+        - CORE
+        - B2BAMIPM
+        - B2B
+        - CR1AMIPM
+        - CORAMIPM
+        - COR1
+        - FADAMIPM
+        - CLSCCPERX
+        - CLSCCPLCH
+        - INST
+        - ADD
+        - UDD
+        - CCI
+        - IAT
+        - CCD
+        - CTX
+        - PPD
+        - CIE
+        - RCK
+        - ARC
+        - WEB
+        - POP
+        - POS
+        - TEL
+        - ITP
+        - CTP
+        - MDP
+        - IMD
+        - SOP
+        - FDP
+      example: 'CORE'
+    entryDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Entry Details\" for more details.
+      type: object
+      required:
+        - transactionAmount
+      properties:
+        references:
+          description: |
+            might contain the endToEndId as well as the new UETR field
+          allOf:
+            - $ref: '#/components/schemas/references'
+        creditor:
+          description: |
+            Name and potentially an identification of the creditor if a \"Debited\" transaction.
+          allOf:
+            - $ref: '#/components/schemas/partyDescription'
+        transactionAmount:
+          description: |
+            The amount of the transaction as billed to the account.
+          allOf:
+            - $ref: '#/components/schemas/amount'
+        currencyExchange:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/reportExchangeRate'
+        creditorAccount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/accountReference'
+        creditorAgent:
+          description: |
+            Proprietary identifications might be provided under financialInstitutionId/other
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
+        ultimateCreditor:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/partyDescription4'
+        debtor:
+          description: |
+            Name and potentially identification of the debtor if a \"Credited\" transaction
+          allOf:
+            - $ref: '#/components/schemas/partyDescription'
+        debtorAccount:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/accountReference'
+        debtorAgent:
+          description: |
+            Proprietary identifications might be provided under financialInstitutionId/other
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
+        ultimateDebtor:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/partyDescription4'
+        remittanceInformationUnstructured:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/Max140Text'
+        remittanceInformationStructured:
+          description: |
+          type: array
+          items:
+            $ref: '#/components/schemas/remittance'
+        purposeCode:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/PurposeCode'
+    contactDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Contact Details\" for more details.
+      type: object
+      properties:
+        namePrefix:
+          description: |
+            Specifies the terms used to formally address a person.
+          allOf:
+            - $ref: '#/components/schemas/NamePrefixCode'
+        name:
+          description: |
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        phoneNumber:
+          description: |
+            pattern \+[0-9]{1,3}-[0-9()+\-]{1,30}
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        mobileNumber:
+          description: |
+            pattern \+[0-9]{1,3}-[0-9()+\-]{1,30}
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        faxNumber:
+          description: |
+            pattern \+[0-9]{1,3}-[0-9()+\-]{1,30}
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        emailAddress:
+          description: |
+            Address for electronic mail (e-mail).
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        emailPurpose:
+          description: |
+            Purpose for which an email address may be used.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        jobTitle:
+          description: |
+            Title of the function.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        responsibility:
+          description: |
+            Role of a person in an organisation.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        department:
+          description: |
+            Identification of a division of a large organisation or building.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        preferredMethod:
+          description: |
+            Preferred method used to reach the contact.
+          allOf:
+            - $ref: '#/components/schemas/PreferredMethod'
+    LEI:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z0-9]{18,18}[0-9]{2,2}'
+      example: '549300DTUYXVMJXZNY75'
+    MessageCode_AisSpecific_401:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
+      type: string
+      pattern: '^(?!(CONSENT_INVALID|^(?!(CONSENT_INVALID))))'
+    MessageCode_AisSpecific_404:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - CONTENT_TEMPORARILY_NOT_AVAILABLE
+      example: 'CONTENT_TEMPORARILY_NOT_AVAILABLE'
+    InterestTypeCode3:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Interest Type Code\" for more details.
+      type: string
+      enum:
+        - FIXD
+        - INDE
+      example: 'FIXD'
+    accountDetails:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Account Details\" for more details.
+      type: object
+      required:
+        - resourceId
+        - currency
+      properties:
+        resourceId:
+          description: |
+            This is the data element to be used in the path when retrieving data from a dedicated account.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        iban:
+          description: |
+            IBAN of the account.
+          allOf:
+            - $ref: '#/components/schemas/IBAN'
+        bban:
+          description: |
+            BBAN of the account. This data elements is used for payment accounts which have no IBAN.
+          allOf:
+            - $ref: '#/components/schemas/BBAN'
+        msisdn:
+          description: |
+            An alias to access a payment account via a registered mobile phone number. This alias might be needed e.g. in the payment initiation services.
+            The support of this alias must be explicitly documented by the ASPSP for the corresponding API Calls.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        other:
+          description: |
+            An alias with a proprietary coding
+          allOf:
+            - $ref: '#/components/schemas/genericAccountIdentification'
+        currency:
+          description: |
+            Account currency
+          allOf:
+            - $ref: '#/components/schemas/CurrencyCode'
+        ownerName:
+          description: |
+            Name of the legal account owner. If there is more than one owner, then e.g. two names might be noted here.
+            For a corporate account, the corporate name is used for this attribute.
+            Even if supported by the ASPSP, the provision of this field might depend on the fact whether  an explicit consent to this specific additional account information has been given by the PSU.
+            NOTE: This attribute is deprecated in later versions.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        ownerNames:
+          description: |
+            List of owner names together with a role, where applicable.
+            NOTE: This attribute is deprecated in later versions.
+          type: array
+          items:
+            $ref: '#/components/schemas/accountOwner'
+        owner:
+          description: |
+            The party that legally owns the account.
+          allOf:
+            - $ref: '#/components/schemas/accountOwner'
+        owners:
+          description: |
+            List of account owners.
+          type: array
+          items:
+            $ref: '#/components/schemas/accountOwner'
+        name:
+          description: |
+            Name of the account, as assigned by the ASPSP, in agreement with the account owner in order to provide an additional means of identification of the account.
+          allOf: 
+            - $ref: '#/components/schemas/Max70Text'
+        displayName:
+          description: |
+            Name of the account as defined by the PSU within online channels.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        product:
+          description: |
+            Product Name of the Bank for this account, proprietary definition
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        cashAccountType:
+          description: |
+            ExternalCashAccountType1Code from ISO 20022
+          allOf:
+            - $ref: '#/components/schemas/CashAccountType'
+        status:
+          description: |
+            Account status.
+            If this field is not used, than the account is available in the sense of this specification.
+          allOf:
+            - $ref: '#/components/schemas/AccountStatusCode'
+        bic:
+          description: |
+                    The BIC associated to the account.
+          allOf:
+            - $ref: '#/components/schemas/BICFI'
+        linkedAccounts:
+          description: |
+            This data attribute is a field, where an ASPSP can name a cash account associated to the described account, e.g. in case of a securities account or a card account.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        usage:
+          description: |
+            Specifies the usage of the account
+            * \"PRIV\": private personal account
+            * \"ORGA\": professional account
+          allOf:
+            - $ref: '#/components/schemas/Max4Text'
+        details:
+          description: |
+            Specifications that might be provided by the ASPSP
+            * characteristics of the account
+            * characteristics of the relevant card
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/balance'
+        tariffs:
+          description: |
+            Currently only supported for securities accounts:
+            Text information on tariffs related to this securities account.
+          allOf:
+            - $ref: '#/components/schemas/Max1000Text'
+        applicableFees:
+          description: |
+            Currently only supported for securities accounts:
+            Array of elements, each representing one fee (rule) that is individually applicable for this Securities account. 
+            If, for example, an ASPSP applies a standard \"managementFee\" X, but the consumer negotiated a discount D, an element should represent (X-D), but neither X nor D.
+          type: array
+          items:
+            $ref: '#/components/schemas/securitiesAccountFee'
+        interest:
+          description: |
+            Currently only supported for savings accounts and loan accounts:
+            A set of interest rates associated to this account, e.g. interests for savings or credits.
+          type: array
+          items:
+            $ref: '#/components/schemas/interest'
+        relatedDates:
+          description: |
+            Currently only supported for securities accounts:
+            Text information on tariffs related to this securities account.
+          allOf:
+            - $ref: '#/components/schemas/accountRelatedDates'
+        collateralsInvolved:
+          description: |
+            Currently only supported for loan accounts:
+            Is set to true if a collateral is involved securing the loan (e.g. security deposit, physical collaterals like houses, cars). 
+            More information might be provided under the \"details\" attribute.
+          type: boolean
+        guaranteeInvolved:
+          description: |
+            Currently only supported for loan accounts:
+            Is set to true in case of specific collaterals where a guarantee of payment of the loan is given by a different person.
+          type: boolean
+        _links:
+          description: |
+            Links to the account, which can be directly used for retrieving account information from this dedicated account.
+            Links to \"balances\" and/or \"transactions\".
+            Links to \"orders\" and/or \"positions\" in the case of securities accounts.
+            These links are only supported, when the corresponding consent has been already granted.
+          allOf:
+            - $ref: '#/components/schemas/links'
+    clientMessageInformation_409_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_409_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+    ISODateTime:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      format: date-time
+      example: '2020-01-01T13:00:00.999-01:00'
+    partyIdentification:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Party Identification\" for more details.
+      type: object
+      properties:
+        organisationId:
+          description: |
+            An entry provided by an external ISO code list
+          allOf:
+            - $ref: '#/components/schemas/organisationIdentification'
+        privateId:
+          description: |
+            A scheme name defined in a proprietary way.
+          allOf:
+            - $ref: '#/components/schemas/privateIdentification'
+    MessageCode_AisSpecific_400:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - CONSENT_TYPE_NOT_SUPPORTED
+        - SESSIONS_NOT_SUPPORTED
+      example: 'SESSIONS_NOT_SUPPORTED'
+    Max1024Text:
+      type: string
+      maxLength: 1024
+      example: 'Text, maximum of 1024 characters.'
+    clientMessageInformation_400_AIS:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_400_AIS'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
+  parameters:
+    PATH_accountId:
+      name: account-id
+      in: path
+      description: |
+        This identification is denoting the addressed (card) account. 
+        The account-id is retrieved by using a \"Read Account List\" or \"Read Card Account list\" call. 
+        The account-id is the \"resourceId\" attribute of the account structure. 
+        Its value is constant at least throughout the lifecycle of a given consent.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Max70Text'
+    HEADER_psuIpAddress_optional:
+      name: PSU-IP-Address
+      in: header
+      description: |
+         The forwarded IP Address header field consists of the corresponding HTTP request IP Address field between PSU and TPP. Conditions will be defined within service specifications, If applicable. 
+      schema:
+        type: string
+        format: ipv4
+      required: false
+      example: '192.168.8.78'
+    QUERY_dateTo:
+      name: dateTo
+      in: query
+      description: |
+        End date (inclusive the data dateTo) of the transaction list, default is \"now\" if not given. 
+        Might be ignored if a delta function is used.
+        For booked transactions, the relevant date is the booking date. 
+        For pending transactions, the relevant date is the entry date, which may not be transparent 
+        neither in this API nor other channels of the ASPSP.
+      required: false
+      schema:
+        $ref: '#/components/schemas/ISODate'
+    QUERY_bookingStatusCard:
+      name: bookingStatus
+      in: query
+      description: |
+        Permitted codes are 
+          * \"booked\",
+          * \"pending\",
+          * \"both\",
+        \"booked\" shall be supported by the ASPSP.
+        To support the \"pending\" and \"both\" feature is optional for the ASPSP, 
+        Error code if not supported in the online banking frontend.
+        If supported, \"both\" means to request transaction reports of transaction of bookingStatus either \"pending\" or \"booked\".
+      required: true
+      schema:
+        type: string
+        enum:
+          - booked
+          - pending
+          - both
+      example: 'booked'
+    QUERY_entryReferenceFrom:
+      name: entryReferenceFrom
+      in: query
+      description: |
+        This data attribute is indicating that the AISP is in favour to get all transactions after 
+        the transaction with identification entryReferenceFrom alternatively to the above defined period. 
+        This is a implementation of a delta access. 
+        If this data element is contained, the entries \"dateFrom\" and \"dateTo\" might be ignored by the ASPSP 
+        if a delta report is supported.
+        Optional if supported by API provider.
+      required: false
+      schema:
+        $ref: '#/components/schemas/Max35Text'
+    HEADER_xRequestId:
+      name: X-Request-ID
+      in: header
+      description: ID of the request, unique to the call, as determined by the initiating party.
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: '99391c7e-ad88-49ec-a2ad-99ddcb1f7721'
+    PATH_transactionId:
+      name: transactionId
+      in: path
+      description: |
+        This identification is given by the attribute transactionId of the corresponding entry of a transaction list.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Max70Text'
+      example: '3dc3d5b3-7023-4848-9853-f5400a64e80f'
+    QUERY_bookingStatusGeneric:
+      name: bookingStatus
+      in: query
+      description: |
+        Permitted codes are 
+          * \"booked\",
+          * \"pending\",  
+          * \"both\",
+          * \"information\" and
+          * \"all\"
+        \"booked\" shall be supported by the ASPSP.
+        To support the \"pending\" and \"both\" feature is optional for the ASPSP, 
+        Error code if not supported in the online banking frontend.
+        If supported, \"both\" means to request transaction reports of transaction of bookingStatus either \"pending\" or \"booked\".
+        To support the \"information\" feature is optional for the ASPSP. Currently the booking status \"information\" only covers standing orders. Error code if not supported.
+        To support the \"all\" feature is optional for the ASPSP, Error code if not supported. If supported, \"all\" means to request transaction reports of transaction of any bookingStatus (\"pending\", \"booked\" or \"information\").
+      required: true
+      schema:
+        type: string
+        enum:
+          - information
+          - booked
+          - pending
+          - both
+          - all
+      example: 'booked'
+    QUERY_deltaList:
+      name: deltaList
+      in: query
+      description: 
+        This data attribute is indicating that the AISP is in favour to get all transactions after the last report access 
+        for this PSU on the addressed account. 
+        This is another implementation of a delta access-report.
+        This delta indicator might be rejected by the ASPSP if this function is not supported.
+        Optional if supported by API provider
+      schema:
+        type: boolean
+      example: true
+    QUERY_cardBrand:
+      name: cardBrand
+      in: query
+      description: |
+        This attribute filters transactions according to their corresponding card brand.
+        Only to be supported in a scenario, where this is used as statements e.g. of card acquirers towards merchants..
+      required: false
+      schema:
+        $ref: '#/components/schemas/Max35Text'
+    HEADER_consentId_mandatory:
+      name: Consent-ID
+      in: header
+      description: |
+        This then contains the consentId of the related AIS consent, which was performed prior to this payment initiation.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Max70Text'
+      example: '123cons456'
+    HEADER_xJwsSignature:
+      name: x-jws-signature
+      in: header
+      description: |
+        The attribute x-jws-signature contains the JSON Web Signature.
+      schema:
+        type: string
+      required: false # conditional
+      example: 'eyJiNjQiOmZhbHNlLCJ4NXQjUzI1NiI6ImR5dFBwU2tKWXpoVGRQWFNXUDdqaFhnRzRrQ09XSVdHaWVzZHprdk5MelkiLCJjcml0IjpbInNpZ1QiLCJzaWdEIiwiYjY0Il0sInNpZ1QiOiIyMDIwLTEwLTI2VDExOjI2OjU3WiIsInNpZ0QiOnsicGFycyI6WyJ4LXJlcXVlc3QtaWQiLCJkaWdlc3QiXSwibUlkIjoiaHR0cDovL3VyaS5ldHNpLm9yZy8xOTE4Mi9IdHRwSGVhZGVycyJ9LCJhbGciOiJSUzI1NiJ9..NuGglWBtHcXavob2ZmW-PoSpMmhJS9U6z8zPqHFoE97vHI3z8wtaVdbwsj5WzgPjtVWUUnk8cxP4JjLXdwzwhhHB2uJ5FI4ZZGdSQQw-9pXPUx3cCJSzHmrgkJ-di-A4'
+    HEADER_digest:
+      name: Digest
+      in: header
+      description: |
+        When API Client include a signature according to this signature profile, they also must include a \"Digest\" header as defined in [RFC3230]. 
+        The \"Digest\" Header contains a Hash of the message body. If the message does not contain a body, the \"Digest\" header must contain the hash of an empty byte list.
+        The only hash algorithms that may be used to calculate the Digest within the context of this specification are SHA-256 and SHA-512 as defined in [RFC5843]. 
+      schema:
+        type: string
+      required: false # conditional
+      example: 'SHA-256=hl1/Eps8BEQW58FJhDApwJXjGY4nr1ArGDHIT25vq6A='
+    QUERY_dateFrom:
+      name: dateFrom
+      in: query
+      description: |
+        Conditional: Starting date (inclusive the date dateFrom) of the transaction list, mandated if no delta access is required
+        and if bookingStatus does not equal \"information\".
+        For booked transactions, the relevant date is the booking date. 
+        For pending transactions, the relevant date is the entry date, which may not be transparent 
+        neither in this API nor other channels of the ASPSP.
+      required: false
+      schema:
+        $ref: '#/components/schemas/ISODate'
+    QUERY_withBalance:
+      name: withBalance
+      in: query
+      description: |
+        If contained, this function reads the requested (account related) resource including the booking balance, 
+        if granted by the PSU in the related consent and available by the ASPSP. 
+        This parameter might be ignored by the ASPSP. 
+      required: false
+      schema:
+        type: boolean
+      example: true
+  requestBodies: {}
+  headers:
+    ASPSP-Notification-Support:
+      description: |
+        true if the ASPSP supports resource status notification services.
+        false if the ASPSP supports resource status notification in general, but not for the current request.
+        Not used, if resource status notification services are generally not supported by the ASPSP.
+        Shall be supported if the ASPSP supports resource status notification services.
+      schema:
+        type: boolean       
+      required: false
+      example: true
+    X-Reference-API-Version:
+      description: ID of the request, unique to the call, as determined by the initiating party.
+      required: true
+      schema:
+        type: string
+      example: '2.1.3'
+    X-Reference-API-Document:
+      description: |
+        The name of the Implementation Guideline document, where the service is based on, e.g. \"Extended Payment Initiation Services\". 
+      required: false
+      schema:
+        type: string
+      example: 'Extended Payment Initiation Services'
+    X-Request-ID:
+      description: |
+        ID of the request, unique to the call, as determined by the initiating party.
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: '99391c7e-ad88-49ec-a2ad-99ddcb1f7721'
+    X-Reference-API-Name:
+      description: |
+        \"Berlin Group openFinance API\" 
+      required: false
+      schema:
+        type: string
+      example: 'Berlin Group openFinance API'
+    Location:
+      description: |
+        Location of the created resource.
+      schema:
+        type: string
+        format: url
+      required: false
+      example: 'https://testbank.com/xs2a/v2/consents/account-access/123cons456'
+  responses:
+    Ok_200_AISACCOUNTDETAILS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - account
+            properties:
+              account:
+                description: |
+                allOf:
+                  - $ref: '#/components/schemas/accountDetails'
+    Ok_200_AISCARDACCOUNTBALANCE:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - cardAccount
+              - balances
+            properties:
+              cardAccount:
+                description: |
+                  Identifier of the addressed card account.
+                allOf:
+                  - $ref: '#/components/schemas/accountReference'
+              debitAccounting:
+                description: |
+                  If true, the amounts of debits on the reports are quoted positive with the related consequence for balances.
+                  If false, the amount of debits on the reports are quoted negative.
+                type: boolean
+              balances:
+                description: |
+                  A list of balances regarding this card account, e.g. the current balance, the last booked balance.
+                type: array
+                items:
+                  $ref: '#/components/schemas/balance'
+    Ok_200_AISACCOUNTLIST:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - accounts
+            properties:
+              accounts:
+                description: |
+                  In case, no account is accessible, the ASPSP shall return an empty array.As this is also considered a positive response, the Response code must still be 200.
+                type: array
+                items:
+                  $ref: '#/components/schemas/accountDetails'
+    Ok_200_AISACCOUNTBALANCE:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - account
+              - balances
+            properties:
+              account:
+                description: |
+                  Identifier of the addressed account.
+                allOf:
+                  - $ref: '#/components/schemas/accountReference'
+              balances:
+                description: |
+                  A list of balances regarding this account, e.g. the current balance, the last booked balance.
+                type: array
+                items:
+                  $ref: '#/components/schemas/balance'
+    Ok_200_AISCARDACCOUNTDETAILS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - account
+            properties:
+              cardAccount:
+                description: |
+                allOf:
+                  - $ref: '#/components/schemas/cardAccountDetails'
+    decline_400_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_400_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_400_AIS'
+    decline_415:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Unsupported Media Type
+    decline_503:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Service Unavailable
+    decline_404_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_404_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_404_AIS'
+    decline_500:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Internal Server Error
+    Ok_200_AISACCOUNTTXDTLS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - transactionDetails
+            properties:
+              transactionDetails:
+                description: |
+                allOf:
+                  - $ref: '#/components/schemas/transactions'
+    decline_408:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Request Timeout
+    Ok_200_AISACCOUNTTXLIST:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - account
+            properties:
+              account:
+                description: |
+                  Identifier of the addressed account.
+                allOf:
+                  - $ref: '#/components/schemas/accountReference'
+              transactions:
+                description: |
+                  JSON based account report. This account report contains transactions resulting from the query parameters.
+                  Note: It is recommended to provide remittance information attributes already here and not only in transaction details. 
+                  Such an implementation avoids too frequent usage of transaction details by API Clients.
+                allOf:
+                  - $ref: '#/components/schemas/accountReport'
+              balances:
+                description: |
+                  A list of balances regarding this account, e.g. the current balance, the last booked balance.
+                type: array
+                items:
+                  $ref: '#/components/schemas/balance'
+              _links:
+                description: |
+                  A list of hyperlinks to be recognised by the TPP. Type of links admitted in this response:
+                  \"download\": a link to a resource, where the transaction list might be downloaded from in case where transaction lists have a huge size.
+                  Remark: This feature shall only be used where camt-data is requested which has a huge size.
+                allOf:
+                  - $ref: '#/components/schemas/_links_200_AISACCOUNTTXLIST'
+        application/xml:
+          schema:
+            description: 
+              In case the ASPSP returns a camt.05x XML structure, the response body consists of either a camt.052 or camt.053 format.
+              The camt.052 may include pending payments which are not yet finally booked. 
+              The ASPSP will decide on the format due to the chosen parameters, specifically on the chosen dates relative to the time of the request. 
+              In addition the ASPSP might offer camt.054x structure e.g. in a corporate setting.
+            type: string
+        text/plain:
+          schema:
+            description: 
+              In case the ASPSP returns a MT94x content, the response body consists of an MT940 or MT942 format in a text structure. 
+              The MT942 may include pending payments which are not yet finally booked. 
+              The ASPSP will decide on the format due to the chosen parameters, specifically on the chosen dates relative to the time of the request.
+            type: string
+    decline_401_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Unauthorised
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_401_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_401_AIS'
+    decline_406:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Not Acceptable
+    decline_409_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_409_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_409_AIS'
+    decline_429_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support :
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Too many Requests
+    decline_403_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_403_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_403_AIS'
+    decline_405_AIS:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Method not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_405_AIS'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_405_AIS'
+    Ok_200_AISCARDACCOUNTLIST:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - cardAccounts
+            properties:
+              cardAccounts:
+                description: |
+                  In case, no card-account is accessible, the ASPSP shall return an empty array. As this is also considered a positive response, the Response Code must still be 200.
+                type: array
+                items:
+                  $ref: '#/components/schemas/cardAccountDetails'
+    Ok_200_AISCARDACCOUNTTXLIST:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - cardAccount
+            properties:
+              cardAccount:
+                description: |
+                  Identifier of the addressed card account.
+                allOf:
+                  - $ref: '#/components/schemas/accountReference'
+              debitAccounting:
+                description: |
+                  If true, the amounts of debits on the reports are quoted positive with the related consequence for balances.
+                  If false, the amount of debits on the reports are quoted negative.
+                type: boolean
+              cardTransactions:
+                description: |
+                  JSON based account report.
+                allOf:
+                  - $ref: '#/components/schemas/cardAccountReport'
+              balances:
+                description: |
+                  A list of balances regarding this account, which might be restricted to the current balance.
+                type: array
+                items:
+                  $ref: '#/components/schemas/balance'
+              _links:
+                description: |
+                  A list of hyperlinks to be recognised by the TPP.Type of links admitted in this response:
+                  \"download\": a link to a resource, where the transaction list might be downloaded from in case where transaction lists have a huge size.
+                allOf:
+                  - $ref: '#/components/schemas/_links_200_AISCARDACCOUNTTXLIST'
+  examples: {}
+
