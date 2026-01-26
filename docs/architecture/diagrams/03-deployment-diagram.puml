@@ -1,0 +1,74 @@
+@startuml Berlin-Group-MCP-Deployment-Diagram
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor<<server>> #E3F2FD
+    BackgroundColor<<filesystem>> #F3E5F5
+    BackgroundColor<<process>> #E8F5E9
+}
+
+title Berlin Group MCP Server - Deployment Architecture
+
+node "Runtime Environment" {
+    package "Node.js Process" <<process>> {
+        component "MCP Server Instance" as ServerInstance {
+            component "Protocol Handler" as ProtocolHandler
+            component "Tool Router" as ToolRouter
+            component "Response Formatter" as ResponseFormatter
+        }
+        
+        component "Indexer Module" as IndexerModule {
+            component "YAML Parser Instance" as YamlParserInstance
+            component "PDF Parser Instance" as PDFParserInstance
+            component "Index Cache" as IndexCache
+        }
+    }
+}
+
+database "YAML Specification Files" <<filesystem>> {
+    folder "yml_files/" {
+        file "BG_oFA_AIS_Version_2.3_20250818.yaml" as AIS
+        file "BG_oFA_PIS_Version_2.3_20251128.yaml" as PIS
+        file "BG_oFA_PIIS_Version_2.3_20250818.yaml" as PIIS
+        file "BG_oFA_Consent_Version_2.1_20251128.yaml" as Consent
+        file "BG_oFA_BASK_Version_2.2_20251128.yaml" as BASK
+        file "BG_oFA_PUSH_Version_2.2_20250818.yaml" as PUSH
+        file "BG_oFA_dataDictionary_Version_2.2.6_20250818.yaml" as DataDict
+    }
+}
+
+database "PDF Documentation Files" <<filesystem>> {
+    folder "pdf_files/" {
+        file "Implementation Guides (*.pdf)" as PDFDocs
+    }
+}
+
+agent "MCP Client/Host Application" {
+    component "Client Process" as ClientProcess
+    component "Request Handler" as RequestHandler
+}
+
+' Data flows
+ClientProcess -->|Call Tool| ProtocolHandler : JSON-RPC via stdio
+ProtocolHandler -->|Parse Request| ToolRouter
+ToolRouter -->|Execute Query| IndexerModule
+YamlParserInstance -->|Load on Init| AIS
+YamlParserInstance -->|Load on Init| PIS
+YamlParserInstance -->|Load on Init| PIIS
+YamlParserInstance -->|Load on Init| Consent
+YamlParserInstance -->|Load on Init| BASK
+YamlParserInstance -->|Load on Init| PUSH
+YamlParserInstance -->|Load on Init| DataDict
+
+PDFParserInstance -->|Load on Init| PDFDocs
+
+YamlParserInstance -->|Index Data| IndexCache
+PDFParserInstance -->|Index Data| IndexCache
+
+IndexCache -->|Return Results| IndexerModule
+IndexerModule -->|Process Query| ToolRouter
+ToolRouter -->|Format Response| ResponseFormatter
+ResponseFormatter -->|Return JSON-RPC| ProtocolHandler
+ProtocolHandler -->|Send Result| ClientProcess
+
+@enduml

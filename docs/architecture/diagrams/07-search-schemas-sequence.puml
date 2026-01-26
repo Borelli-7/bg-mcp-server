@@ -1,0 +1,156 @@
+@startuml Berlin-Group-MCP-Search-Schemas-Sequence
+title Berlin Group MCP Server - Search & Get Schemas Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+database "Schemas Index" as SchemaIndex
+
+== Search Schemas Flow ==
+
+Client -[#0277BD]> Server: callTool("search_schemas", {query: "transaction"})
+activate Server
+note right of Server: Receive search_schemas tool call
+
+Server -[#0277BD]> Router: route_tool_call(search_schemas)
+activate Router
+
+Router -[#0277BD]> Indexer: searchSchemas(query)
+activate Indexer
+
+Indexer -[#388E3C]> YamlParser: searchSchemas(query)
+activate YamlParser
+
+YamlParser -[#388E3C]> SchemaIndex: get all schemas
+SchemaIndex --[#388E3C]> YamlParser: schemas array
+
+YamlParser -[#388E3C]> YamlParser: filter_schemas()
+note right of YamlParser
+    Filter schemas where:
+    - name contains query
+    - schema content contains query
+    - properties contain query
+    - description contains query
+end note
+
+YamlParser -[#388E3C]> YamlParser: build_schema_results()
+note right of YamlParser
+    For each matched schema:
+    - Schema name
+    - Spec file reference
+    - Type (object, array, etc)
+    - Description
+    - Properties overview
+end note
+
+YamlParser --[#388E3C]> Indexer: filtered SchemaInfo[]
+deactivate YamlParser
+
+Indexer --[#0277BD]> Router: search results
+deactivate Indexer
+
+Router --[#0277BD]> Server: formatted results
+deactivate Router
+
+Server --[#0277BD]> Client: Search Results (simplified schema info)
+deactivate Server
+
+== Get Specific Schema Flow ==
+
+Client -[#D32F2F]> Server: callTool("get_schema", {schemaName: "TransactionInfo", specFile: "AIS_2.3"})
+activate Server
+note right of Server: Receive get_schema tool call
+
+Server -[#D32F2F]> Router: route_tool_call(get_schema)
+activate Router
+
+Router -[#D32F2F]> Indexer: getSchema(specFile, schemaName)
+activate Indexer
+
+Indexer -[#F57C00]> YamlParser: getSchema(specFile, schemaName)
+activate YamlParser
+
+YamlParser -[#F57C00]> SchemaIndex: lookup schema
+SchemaIndex --[#F57C00]> YamlParser: schema definition
+
+YamlParser -[#F57C00]> YamlParser: resolve_schema_references()
+note right of YamlParser
+    For schema with $ref:
+    - Find referenced schema
+    - Recursively resolve refs
+    - Build complete schema tree
+end note
+
+loop For each $ref in schema
+    YamlParser -[#F57C00]> SchemaIndex: resolve reference
+    SchemaIndex --[#F57C00]> YamlParser: referenced schema
+    YamlParser -[#F57C00]> YamlParser: merge_schema_data()
+end
+
+YamlParser -[#F57C00]> YamlParser: build_property_documentation()
+note right of YamlParser
+    For each property:
+    - Property name
+    - Type (string, integer, etc)
+    - Format (if applicable)
+    - Required (yes/no)
+    - Description
+    - Enum values (if applicable)
+    - Min/Max constraints
+    - Pattern (regex)
+end note
+
+YamlParser --[#F57C00]> Indexer: complete schema definition
+deactivate YamlParser
+
+Indexer -[#388E3C]> Indexer: enhance_with_examples()
+note right of Indexer
+    Include additional info:
+    - Usage context
+    - Related schemas
+    - Common patterns
+    - Validation rules
+end note
+
+Indexer --[#D32F2F]> Router: complete schema data
+deactivate Indexer
+
+Router -[#D32F2F]> Router: format_schema_response()
+note right of Router
+    Prepare response with:
+    {
+        schema: {
+            name: string,
+            type: string,
+            description: string,
+            properties: [{
+                name, type, required, description,
+                constraints, examples
+            }],
+            required: string[],
+            specFile: string,
+            examples: any
+        }
+    }
+end note
+
+Router --[#D32F2F]> Server: formatted schema response
+deactivate Router
+
+Server --[#D32F2F]> Client: JSON-RPC Response with Full Schema
+deactivate Server
+
+Client -[#1976D2]> Client: display_schema_details()
+note right of Client
+    Display:
+    - Schema name and type
+    - Property list with types
+    - Required fields
+    - Constraints and validation
+    - Usage documentation
+    - Examples
+end note
+
+@enduml

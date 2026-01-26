@@ -1,0 +1,134 @@
+@startuml Berlin-Group-MCP-Get-Endpoint-Details-Sequence
+title Berlin Group MCP Server - Get Endpoint Details Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+database "Specs & Endpoints Index" as SpecIndex
+
+Client -[#0277BD]> Server: callTool("get_endpoint_details", {path: "/v1/accounts", method: "GET"})
+activate Server
+note right of Server: Receive get_endpoint_details tool call
+
+Server -[#0277BD]> Router: route_tool_call(get_endpoint_details)
+activate Router
+
+Router -[#0277BD]> Indexer: getEndpointDetails(path, method)
+activate Indexer
+
+Indexer -[#388E3C]> YamlParser: getEndpointByPath(path)
+activate YamlParser
+
+YamlParser -[#388E3C]> SpecIndex: query endpoints index
+SpecIndex --[#388E3C]> YamlParser: matching endpoints
+
+YamlParser -[#388E3C]> YamlParser: find_exact_match(method)
+note right of YamlParser
+    Search for endpoint where:
+    - path matches (case-sensitive)
+    - method matches (case-insensitive)
+end note
+
+YamlParser --[#388E3C]> Indexer: matched EndpointInfo
+deactivate YamlParser
+
+Indexer -[#D32F2F]> Indexer: enrich_endpoint_details()
+note right of Indexer
+    Extract from matched endpoint:
+    - Full operation definition
+    - Request/response schemas
+    - Parameters (path, query, header)
+    - Request body schema
+    - Security requirements
+    - Status codes
+end note
+
+Indexer -[#D32F2F]> YamlParser: getSchema(specFile, schemaName)
+activate YamlParser
+note right of YamlParser
+    For each referenced schema:
+    - Request body schema
+    - Response schema (200, 400, etc)
+    - Parameter schemas
+end note
+
+YamlParser -[#D32F2F]> SpecIndex: lookup schema definition
+SpecIndex --[#D32F2F]> YamlParser: schema definition
+
+YamlParser --[#D32F2F]> Indexer: enriched schema data
+deactivate YamlParser
+
+Indexer -[#388E3C]> Indexer: build_detail_response()
+note right of Indexer
+    Construct detailed object:
+    {
+        path: string,
+        method: string,
+        operationId: string,
+        summary: string,
+        description: string,
+        parameters: [{
+            name, in, type, required, description
+        }],
+        requestBody: {
+            required: boolean,
+            content: {
+                mediaType: schemaRef
+            }
+        },
+        responses: {
+            statusCode: {
+                description,
+                schema,
+                headers
+            }
+        },
+        security: [...],
+        tags: [...],
+        specFile: string
+    }
+end note
+
+Indexer --[#0277BD]> Router: complete endpoint details
+deactivate Indexer
+
+Router -[#0277BD]> Router: format_detailed_response()
+note right of Router
+    Prepare response with:
+    - Full endpoint specification
+    - Schema definitions
+    - Parameter documentation
+    - Example values
+    - Security info
+end note
+
+Router --[#0277BD]> Server: formatted detailed response
+deactivate Router
+
+Server -[#0277BD]> Server: create_json_rpc_response()
+note right of Server
+    {
+        jsonrpc: "2.0",
+        id: request_id,
+        result: {
+            endpoint: {...}
+        }
+    }
+end note
+
+Server --[#0277BD]> Client: JSON-RPC Response
+deactivate Server
+
+Client -[#1976D2]> Client: display_endpoint_details()
+note right of Client
+    Display:
+    - Full API specification
+    - Request/response schemas
+    - Parameter requirements
+    - Security mechanisms
+    - Usage examples
+end note
+
+@enduml

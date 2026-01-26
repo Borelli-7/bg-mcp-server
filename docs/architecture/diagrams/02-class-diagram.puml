@@ -1,0 +1,170 @@
+@startuml Berlin-Group-MCP-Class-Diagram
+!define ABSTRACT abstract
+skinparam classBackgroundColor #E1F5FE
+skinparam classBorderColor #01579B
+skinparam arrowColor #0277BD
+
+title Berlin Group MCP Server - Class Diagram
+
+package "MCP SDK" {
+    interface IServer
+    interface ITransport
+    class Server implements IServer
+    class StdioServerTransport implements ITransport
+}
+
+package "Berlin Group MCP Core" {
+    class Index {
+        - indexer: SpecificationIndexer
+        - server: Server
+        - transport: StdioServerTransport
+        + initialize(): Promise<void>
+        + handleToolCall(): Promise<any>
+        + setupTools(): void
+    }
+
+    class SpecificationIndexer {
+        - yamlParser: YamlParser
+        - pdfParser: PdfParser
+        - initialized: boolean
+        + initialize(yamlDir, pdfDir): Promise<void>
+        + isInitialized(): boolean
+        + getAllEndpoints(): EndpointInfo[]
+        + searchEndpoints(query): EndpointInfo[]
+        + getEndpointsByTag(tag): EndpointInfo[]
+        + getEndpointsByMethod(method): EndpointInfo[]
+        + getEndpointsBySpec(specFile): EndpointInfo[]
+        + getAllSchemas(): SchemaInfo[]
+        + searchSchemas(query): SchemaInfo[]
+        + getSchema(specFile, name): any
+        + getAllSpecs(): SpecInfo[]
+        + getSpecDetails(fileName): OpenAPISpec
+        + getAllPdfDocuments(): PDFInfo[]
+        + searchPdfDocuments(query): PDFSearchResult[]
+        + searchAll(query): SearchResults
+        + getStatistics(): Statistics
+    }
+}
+
+package "YAML Parser" {
+    class YamlParser {
+        - specs: Map<string, OpenAPISpec>
+        - endpoints: EndpointInfo[]
+        + loadYamlFiles(yamlDir): Promise<void>
+        - parseYamlFile(filePath, fileName): Promise<void>
+        - extractEndpoints(spec): void
+        + getSpecs(): Map<string, OpenAPISpec>
+        + getEndpoints(): EndpointInfo[]
+        + searchEndpoints(query): EndpointInfo[]
+        + getEndpointsByPath(path): EndpointInfo
+        + getAllSchemas(): SchemaInfo[]
+        + searchSchemas(query): SchemaInfo[]
+        + getSchema(specFile, name): any
+    }
+
+    class OpenAPISpec {
+        + fileName: string
+        + version: string
+        + title: string
+        + description?: string
+        + paths: Record<string, any>
+        + components?: Components
+    }
+
+    class EndpointInfo {
+        + path: string
+        + method: string
+        + operationId?: string
+        + summary?: string
+        + description?: string
+        + parameters?: any[]
+        + requestBody?: any
+        + responses: Record<string, any>
+        + tags?: string[]
+        + security?: any[]
+        + specFile: string
+    }
+
+    class Components {
+        + schemas?: Record<string, any>
+        + securitySchemes?: Record<string, any>
+        + parameters?: Record<string, any>
+        + responses?: Record<string, any>
+    }
+}
+
+package "PDF Parser" {
+    class PdfParser {
+        - documents: Map<string, PDFDocument>
+        + loadPdfFiles(pdfDir): Promise<void>
+        - parsePdfFile(filePath, fileName): Promise<void>
+        + getDocuments(): Map<string, PDFDocument>
+        + searchDocuments(query): PDFSearchResult[]
+        + getDocumentText(fileName): string
+        + getAllDocumentSummaries(): PDFInfo[]
+    }
+
+    class PDFDocument {
+        + fileName: string
+        + title?: string
+        + text: string
+        + pages: number
+        + metadata?: any
+    }
+
+    class PDFSearchResult {
+        + fileName: string
+        + matches: string[]
+    }
+}
+
+package "Data Types" {
+    class SchemaInfo {
+        + specFile: string
+        + name: string
+        + schema: any
+    }
+
+    class SpecInfo {
+        + fileName: string
+        + title: string
+        + version: string
+        + description?: string
+    }
+
+    class PDFInfo {
+        + fileName: string
+        + title?: string
+        + pages: number
+    }
+
+    class Statistics {
+        + endpointCount: number
+        + schemaCount: number
+        + specFileCount: number
+        + pdfDocumentCount: number
+        + tagCount: number
+    }
+}
+
+' Relationships
+Index --> SpecificationIndexer : creates/uses
+Index --> Server : creates
+Index --> StdioServerTransport : creates
+
+SpecificationIndexer --> YamlParser : uses
+SpecificationIndexer --> PdfParser : uses
+
+YamlParser --> OpenAPISpec : manages
+YamlParser --> EndpointInfo : creates/returns
+OpenAPISpec --> Components : contains
+
+PdfParser --> PDFDocument : manages
+PdfParser --> PDFSearchResult : returns
+
+SpecificationIndexer --> SchemaInfo : returns
+SpecificationIndexer --> SpecInfo : returns
+SpecificationIndexer --> PDFInfo : returns
+SpecificationIndexer --> Statistics : provides
+
+@enduml
