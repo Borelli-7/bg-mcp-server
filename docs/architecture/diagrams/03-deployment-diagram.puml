@@ -1,74 +1,93 @@
 @startuml Berlin-Group-MCP-Deployment-Diagram
-!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
 skinparam linetype ortho
-skinparam rectangle {
-    BackgroundColor<<server>> #E3F2FD
-    BackgroundColor<<filesystem>> #F3E5F5
-    BackgroundColor<<process>> #E8F5E9
-}
+skinparam componentStyle rectangle
 
 title Berlin Group MCP Server - Deployment Architecture
 
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+skinparam database {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+}
+
+skinparam component {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+}
+
 node "Runtime Environment" {
-    package "Node.js Process" <<process>> {
-        component "MCP Server Instance" as ServerInstance {
-            component "Protocol Handler" as ProtocolHandler
-            component "Tool Router" as ToolRouter
-            component "Response Formatter" as ResponseFormatter
-        }
+    node "Node.js Process" {
+        component "MCP Server Instance" as ServerInstance
+        component "Protocol Handler" as ProtocolHandler
+        component "Tool Router" as ToolRouter
+        component "Response Formatter" as ResponseFormatter
         
-        component "Indexer Module" as IndexerModule {
-            component "YAML Parser Instance" as YamlParserInstance
-            component "PDF Parser Instance" as PDFParserInstance
-            component "Index Cache" as IndexCache
-        }
+        component "Indexer Module" as IndexerModule
+        component "YAML Parser Instance" as YamlParserInstance
+        component "PDF Parser Instance" as PDFParserInstance
+        component "Index Cache" as IndexCache
     }
 }
 
-database "YAML Specification Files" <<filesystem>> {
-    folder "yml_files/" {
-        file "BG_oFA_AIS_Version_2.3_20250818.yaml" as AIS
-        file "BG_oFA_PIS_Version_2.3_20251128.yaml" as PIS
-        file "BG_oFA_PIIS_Version_2.3_20250818.yaml" as PIIS
-        file "BG_oFA_Consent_Version_2.1_20251128.yaml" as Consent
-        file "BG_oFA_BASK_Version_2.2_20251128.yaml" as BASK
-        file "BG_oFA_PUSH_Version_2.2_20250818.yaml" as PUSH
-        file "BG_oFA_dataDictionary_Version_2.2.6_20250818.yaml" as DataDict
-    }
+database "YAML Specification Files\n(yml_files/)" as YamlDB {
+    storage "BG_oFA_AIS_Version_2.3" as AIS
+    storage "BG_oFA_PIS_Version_2.3" as PIS
+    storage "BG_oFA_PIIS_Version_2.3" as PIIS
+    storage "BG_oFA_Consent_Version_2.1" as Consent
+    storage "BG_oFA_BASK_Version_2.2" as BASK
+    storage "BG_oFA_PUSH_Version_2.2" as PUSH
+    storage "BG_oFA_dataDictionary_Version_2.2.6" as DataDict
 }
 
-database "PDF Documentation Files" <<filesystem>> {
-    folder "pdf_files/" {
-        file "Implementation Guides (*.pdf)" as PDFDocs
-    }
+database "PDF Documentation Files\n(pdf_files/)" as PdfDB {
+    storage "Implementation Guides" as PDFDocs
 }
 
-agent "MCP Client/Host Application" {
-    component "Client Process" as ClientProcess
-    component "Request Handler" as RequestHandler
-}
+actor "MCP Client\n(Claude/IDE)" as Client
 
-' Data flows
-ClientProcess -->|Call Tool| ProtocolHandler : JSON-RPC via stdio
-ProtocolHandler -->|Parse Request| ToolRouter
-ToolRouter -->|Execute Query| IndexerModule
-YamlParserInstance -->|Load on Init| AIS
-YamlParserInstance -->|Load on Init| PIS
-YamlParserInstance -->|Load on Init| PIIS
-YamlParserInstance -->|Load on Init| Consent
-YamlParserInstance -->|Load on Init| BASK
-YamlParserInstance -->|Load on Init| PUSH
-YamlParserInstance -->|Load on Init| DataDict
+' Internal connections
+ServerInstance --> ProtocolHandler
+ProtocolHandler --> ToolRouter
+ToolRouter --> IndexerModule
+IndexerModule --> YamlParserInstance
+IndexerModule --> PDFParserInstance
+YamlParserInstance --> IndexCache
+PDFParserInstance --> IndexCache
+ToolRouter --> ResponseFormatter
+ResponseFormatter --> ProtocolHandler
 
-PDFParserInstance -->|Load on Init| PDFDocs
+' External connections
+Client --> ProtocolHandler : JSON-RPC\nvia stdio
+ProtocolHandler --> Client : Response
 
-YamlParserInstance -->|Index Data| IndexCache
-PDFParserInstance -->|Index Data| IndexCache
+' File loading
+YamlParserInstance --> AIS : reads
+YamlParserInstance --> PIS : reads
+YamlParserInstance --> PIIS : reads
+YamlParserInstance --> Consent : reads
+YamlParserInstance --> BASK : reads
+YamlParserInstance --> PUSH : reads
+YamlParserInstance --> DataDict : reads
 
-IndexCache -->|Return Results| IndexerModule
-IndexerModule -->|Process Query| ToolRouter
-ToolRouter -->|Format Response| ResponseFormatter
-ResponseFormatter -->|Return JSON-RPC| ProtocolHandler
-ProtocolHandler -->|Send Result| ClientProcess
+PDFParserInstance --> PDFDocs : reads
+
+note right of IndexCache
+  In-memory storage:
+  - Endpoints Map
+  - Schemas Map
+  - PDF Documents Map
+end note
+
+note bottom of Client
+  MCP Protocol Communication:
+  - ListToolsRequest
+  - CallToolRequest
+  - ListResourcesRequest
+  - ReadResourceRequest
+end note
 
 @enduml
