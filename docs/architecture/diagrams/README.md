@@ -203,15 +203,21 @@ berlin-group-mcp/
 ├── docs/
 │   └── architecture/
 │       └── diagrams/
-│           ├── 01-component-architecture.puml
-│           ├── 02-class-diagram.puml
-│           ├── 03-deployment-diagram.puml
-│           ├── 04-initialization-sequence.puml
-│           ├── 05-search-endpoints-sequence.puml
-│           ├── 06-get-endpoint-details-sequence.puml
-│           ├── 07-search-schemas-sequence.puml
-│           ├── 08-pdf-search-sequence.puml
-│           ├── 09-search-all-sequence.puml
+│           ├── 01-component-architecture.puml    # High-level system components
+│           ├── 02-class-diagram.puml             # Class structure & interfaces
+│           ├── 03-deployment-diagram.puml        # Runtime deployment configuration
+│           ├── 04-initialization-sequence.puml   # Server startup flow
+│           ├── 05-search-endpoints-sequence.puml # Endpoint search functionality
+│           ├── 06-get-endpoint-details-sequence.puml  # Endpoint details retrieval
+│           ├── 07-search-schemas-sequence.puml   # Schema search & retrieval
+│           ├── 08-pdf-search-sequence.puml       # PDF documentation search
+│           ├── 09-search-all-sequence.puml       # Comprehensive search
+│           ├── 10-package-diagram.puml           # Module dependencies
+│           ├── 11-activity-diagram.puml          # Main application workflow
+│           ├── 12-filter-endpoints-sequence.puml # Filter by tag/method
+│           ├── 13-statistics-sequence.puml       # Get statistics flow
+│           ├── 14-list-specifications-sequence.puml  # List/get spec details
+│           ├── 15-resource-handler-sequence.puml # MCP resource handling
 │           └── README.md (this file)
 ├── src/
 │   ├── index.ts          # Entry point and tool definitions
@@ -283,20 +289,44 @@ berlin-group-mcp/
 
 This documentation folder contains the following PlantUML diagrams:
 
-1. **Component Architecture** - System components and their relationships
-2. **Class Diagram** - Detailed class structure and interfaces
-3. **Deployment Diagram** - Runtime configuration and file locations
-4. **Initialization Sequence** - Server startup and data loading process
-5. **Search Endpoints Sequence** - Step-by-step endpoint search flow
-6. **Get Endpoint Details Sequence** - Detailed endpoint retrieval process
-7. **Search Schemas Sequence** - Schema search and retrieval flows
-8. **PDF Search Sequence** - PDF document search functionality
-9. **Comprehensive Search Sequence** - Unified search across all sources
+### Structural Diagrams
+1. **01-component-architecture.puml** - High-level system components and their relationships, showing MCP Server layer, core components, parsers, and data resources
+2. **02-class-diagram.puml** - Detailed class structure with interfaces, methods, and properties for all TypeScript classes
+3. **03-deployment-diagram.puml** - Runtime configuration showing Node.js process, file locations, and client communication
+4. **10-package-diagram.puml** - Module dependencies showing external packages, internal modules, and data flow
+
+### Behavioral Diagrams
+5. **11-activity-diagram.puml** - Complete application workflow from startup through request handling to shutdown
+
+### Sequence Diagrams (Functionality-specific)
+6. **04-initialization-sequence.puml** - Server startup and parallel data loading process
+7. **05-search-endpoints-sequence.puml** - Step-by-step endpoint search flow with filtering logic
+8. **06-get-endpoint-details-sequence.puml** - Detailed endpoint retrieval with schema resolution
+9. **07-search-schemas-sequence.puml** - Schema search and specific schema retrieval with $ref resolution
+10. **08-pdf-search-sequence.puml** - PDF document search with context extraction
+11. **09-search-all-sequence.puml** - Parallel unified search across all data sources
+12. **12-filter-endpoints-sequence.puml** - Filter endpoints by tag or HTTP method
+13. **13-statistics-sequence.puml** - Statistics gathering from all data stores
+14. **14-list-specifications-sequence.puml** - List all specs and get specific spec details
+15. **15-resource-handler-sequence.puml** - MCP resource listing and reading flows
 
 All diagrams are in PlantUML format and can be rendered using:
-- PlantUML online viewer
-- VS Code PlantUML extension
-- Local PlantUML installation
+- PlantUML online viewer (https://www.plantuml.com/plantuml)
+- VS Code PlantUML extension (jebbs.plantuml)
+- Local PlantUML installation with Java
+- IntelliJ IDEA PlantUML integration plugin
+
+### Rendering Commands (CLI)
+```bash
+# Render single diagram to PNG
+java -jar plantuml.jar diagram.puml
+
+# Render all diagrams to SVG
+java -jar plantuml.jar -tsvg *.puml
+
+# Watch and auto-render on changes
+java -jar plantuml.jar -gui *.puml
+```
 
 ## Contact & Contribution
 

@@ -1,0 +1,154 @@
+@startuml Berlin-Group-MCP-Filter-Endpoints-Sequence
+title Berlin Group MCP Server - Filter Endpoints by Tag/Method Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+database "Endpoints Index" as Index
+
+== Filter Endpoints by Tag Flow ==
+
+Client -[#0277BD]> Server: callTool("filter_endpoints_by_tag", {tag: "accounts"})
+activate Server
+note right of Server
+    Receive filter_endpoints_by_tag
+    tool call with tag parameter
+end note
+
+Server -[#0277BD]> Router: route_tool_call(filter_endpoints_by_tag)
+activate Router
+
+Router -[#0277BD]> Indexer: getEndpointsByTag(tag)
+activate Indexer
+
+Indexer -[#388E3C]> YamlParser: getEndpoints()
+activate YamlParser
+
+YamlParser -[#388E3C]> Index: retrieve all endpoints
+Index --[#388E3C]> YamlParser: EndpointInfo[]
+
+YamlParser --[#388E3C]> Indexer: all endpoints array
+deactivate YamlParser
+
+Indexer -[#388E3C]> Indexer: filter_by_tag()
+note right of Indexer
+    Filter logic:
+    endpoints.filter(ep =>
+        ep.tags?.some(t => 
+            t.toLowerCase() === 
+            tag.toLowerCase()
+        )
+    )
+end note
+
+Indexer -[#388E3C]> Indexer: build_filtered_results()
+note right of Indexer
+    Result includes for each endpoint:
+    - path: "/v1/accounts"
+    - method: "GET"
+    - operationId: "getAccountList"
+    - summary: "Read Account List"
+    - tags: ["accounts"]
+    - specFile: "BG_oFA_AIS_..."
+end note
+
+Indexer --[#0277BD]> Router: filtered EndpointInfo[]
+deactivate Indexer
+
+Router -[#0277BD]> Router: format_response()
+note right of Router
+    JSON response:
+    {
+        content: [{
+            type: "text",
+            text: JSON.stringify(
+                filteredEndpoints, 
+                null, 2
+            )
+        }]
+    }
+end note
+
+Router --[#0277BD]> Server: formatted response
+deactivate Router
+
+Server --[#0277BD]> Client: JSON-RPC Response
+deactivate Server
+
+note over Client
+    Client receives all endpoints
+    tagged with "accounts":
+    - GET /v1/accounts
+    - GET /v1/accounts/{account-id}
+    - GET /v1/accounts/{account-id}/balances
+    - GET /v1/accounts/{account-id}/transactions
+    etc.
+end note
+
+== Filter Endpoints by HTTP Method Flow ==
+
+Client -[#D32F2F]> Server: callTool("filter_endpoints_by_method", {method: "POST"})
+activate Server
+note right of Server
+    Receive filter_endpoints_by_method
+    tool call with method parameter
+end note
+
+Server -[#D32F2F]> Router: route_tool_call(filter_endpoints_by_method)
+activate Router
+
+Router -[#D32F2F]> Indexer: getEndpointsByMethod(method)
+activate Indexer
+
+Indexer -[#F57C00]> YamlParser: getEndpoints()
+activate YamlParser
+
+YamlParser -[#F57C00]> Index: retrieve all endpoints
+Index --[#F57C00]> YamlParser: EndpointInfo[]
+
+YamlParser --[#F57C00]> Indexer: all endpoints array
+deactivate YamlParser
+
+Indexer -[#F57C00]> Indexer: filter_by_method()
+note right of Indexer
+    Filter logic:
+    endpoints.filter(ep =>
+        ep.method.toLowerCase() === 
+        method.toLowerCase()
+    )
+end note
+
+Indexer -[#F57C00]> Indexer: build_filtered_results()
+note right of Indexer
+    All POST endpoints:
+    - POST /v1/payments
+    - POST /v1/consents
+    - POST /v1/signing-baskets
+    - POST /v1/periodic-payments
+    etc.
+end note
+
+Indexer --[#D32F2F]> Router: filtered EndpointInfo[]
+deactivate Indexer
+
+Router -[#D32F2F]> Router: format_response()
+
+Router --[#D32F2F]> Server: formatted response
+deactivate Router
+
+Server --[#D32F2F]> Client: JSON-RPC Response
+deactivate Server
+
+note over Client
+    Client receives all POST endpoints
+    across all specifications:
+    - Payment initiation
+    - Consent creation
+    - Signing basket creation
+    - Push notifications
+    etc.
+end note
+
+@enduml

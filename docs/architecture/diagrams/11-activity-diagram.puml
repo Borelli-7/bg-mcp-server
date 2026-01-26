@@ -1,0 +1,159 @@
+@startuml Berlin-Group-MCP-Activity-Diagram
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    DiamondBackgroundColor #FFF9C4
+    DiamondBorderColor #F57C00
+}
+
+title Berlin Group MCP Server - Main Application Activity Diagram
+
+|#E8F5E9|Startup Phase|
+start
+:Application Launched;
+:Import MCP SDK modules;
+:Import Parser modules;
+:Resolve project paths;
+note right
+    __dirname resolution
+    for yaml and pdf directories
+end note
+
+|#E3F2FD|Initialization Phase|
+:Create SpecificationIndexer instance;
+:Create MCP Server instance;
+:Create StdioServerTransport instance;
+
+fork
+    :Register ListToolsRequestSchema handler;
+    :Register all 12 MCP tools;
+    note right
+        search_endpoints
+        get_endpoint_details
+        search_schemas
+        get_schema
+        list_specifications
+        get_specification_details
+        search_pdf_documentation
+        list_pdf_documents
+        search_all
+        get_statistics
+        filter_endpoints_by_tag
+        filter_endpoints_by_method
+    end note
+fork again
+    :Register ListResourcesRequestSchema handler;
+fork again
+    :Register ReadResourceRequestSchema handler;
+end fork
+
+:Call indexer.initialize(yamlDir, pdfDir);
+
+|#FFF3E0|Data Loading Phase|
+fork
+    |#C8E6C9|YAML Processing|
+    :Load YAML files from yml_files/;
+    while (More YAML files?) is (yes)
+        :Read YAML file content;
+        :Parse with js-yaml;
+        :Extract OpenAPI info;
+        :Extract endpoints;
+        :Extract schemas;
+        :Store in specs Map;
+    endwhile (no)
+fork again
+    |#FFECB3|PDF Processing|
+    :Load PDF files from pdf_files/;
+    while (More PDF files?) is (yes)
+        :Read PDF file buffer;
+        :Parse with pdf-parse;
+        :Extract text content;
+        :Extract metadata;
+        :Store in documents Map;
+    endwhile (no)
+end fork
+
+|#E3F2FD|Server Ready Phase|
+:Set initialized = true;
+:Log initialization statistics;
+:Connect server to transport;
+:Log "Server ready and listening on stdio";
+
+|#E1F5FE|Request Handling Loop|
+while (Server Running?) is (yes)
+    :Wait for JSON-RPC request;
+    
+    if (Request type?) then (tool call)
+        :Extract tool name and arguments;
+        
+        if (Indexer initialized?) then (yes)
+            switch (Tool Name?)
+            case (search_endpoints)
+                :Call indexer.searchEndpoints(query);
+                :Return matching endpoints;
+            case (get_endpoint_details)
+                :Find endpoint by path+method;
+                :Return full endpoint details;
+            case (search_schemas)
+                :Call indexer.searchSchemas(query);
+                :Return matching schemas;
+            case (get_schema)
+                :Call indexer.getSchema(specFile, name);
+                :Return schema definition;
+            case (list_specifications)
+                :Call indexer.getAllSpecs();
+                :Return spec list;
+            case (get_specification_details)
+                :Call indexer.getSpecDetails(fileName);
+                :Return spec details;
+            case (search_pdf_documentation)
+                :Call indexer.searchPdfDocuments(query);
+                :Return PDF matches;
+            case (list_pdf_documents)
+                :Call indexer.getAllPdfDocuments();
+                :Return document list;
+            case (search_all)
+                :Call indexer.searchAll(query);
+                :Return combined results;
+            case (get_statistics)
+                :Call indexer.getStatistics();
+                :Return statistics;
+            case (filter_endpoints_by_tag)
+                :Call indexer.getEndpointsByTag(tag);
+                :Return filtered endpoints;
+            case (filter_endpoints_by_method)
+                :Call indexer.getEndpointsByMethod(method);
+                :Return filtered endpoints;
+            case (unknown)
+                :Return error: Unknown tool;
+            endswitch
+            
+            :Format JSON response;
+            :Send response via transport;
+        else (no)
+            :Return error: Not initialized;
+        endif
+        
+    elseif (Request type?) then (list_tools)
+        :Return TOOLS array definition;
+        
+    elseif (Request type?) then (list_resources)
+        :Return specs as resources;
+        
+    elseif (Request type?) then (read_resource)
+        :Extract spec filename from URI;
+        :Return spec content as JSON;
+        
+    else (error)
+        :Return error response;
+    endif
+    
+endwhile (shutdown)
+
+|#FFEBEE|Shutdown Phase|
+:Disconnect transport;
+:Clean up resources;
+stop
+
+@enduml

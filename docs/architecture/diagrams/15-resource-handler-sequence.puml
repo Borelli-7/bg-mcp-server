@@ -1,0 +1,152 @@
+@startuml Berlin-Group-MCP-Resource-Handler-Sequence
+title Berlin Group MCP Server - Resource Handler Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Resource Handler)" as Server
+participant "ListResourcesHandler" as ListHandler
+participant "ReadResourceHandler" as ReadHandler
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+database "Specs Index" as SpecsIndex
+
+== List Resources Flow ==
+
+Client -[#0277BD]> Server: request("resources/list", {})
+activate Server
+note right of Server
+    MCP Client requests list
+    of available resources
+end note
+
+Server -[#0277BD]> ListHandler: handle(ListResourcesRequestSchema)
+activate ListHandler
+
+ListHandler -[#388E3C]> Indexer: getAllSpecs()
+activate Indexer
+
+Indexer -[#388E3C]> YamlParser: getSpecs()
+activate YamlParser
+YamlParser -[#388E3C]> SpecsIndex: get all specs
+SpecsIndex --[#388E3C]> YamlParser: Map values
+YamlParser --[#388E3C]> Indexer: spec array
+deactivate YamlParser
+
+Indexer --[#388E3C]> ListHandler: specs summary
+deactivate Indexer
+
+ListHandler -[#388E3C]> ListHandler: map_to_resources()
+note right of ListHandler
+    Transform specs to MCP resources:
+    specs.map(spec => ({
+        uri: `berlin-group://specs/${spec.fileName}`,
+        name: spec.title,
+        description: spec.description || 
+            `${spec.title} specification`,
+        mimeType: 'application/json'
+    }))
+end note
+
+ListHandler --[#0277BD]> Server: { resources: [...] }
+deactivate ListHandler
+
+Server --[#0277BD]> Client: Resources List Response
+deactivate Server
+
+note over Client
+    **Available Resources:**
+    - berlin-group://specs/BG_oFA_AIS_...
+      "Account Information Service API"
+    - berlin-group://specs/BG_oFA_PIS_...
+      "Payment Initiation Service API"
+    - berlin-group://specs/BG_oFA_PIIS_...
+      "Payment Instrument Issuer Service"
+    - berlin-group://specs/BG_oFA_Consent_...
+      "Consent Management API"
+    - berlin-group://specs/BG_oFA_BASK_...
+      "Signing Baskets API"
+    - berlin-group://specs/BG_oFA_PUSH_...
+      "Push Notifications API"
+    - berlin-group://specs/BG_oFA_dataDictionary_...
+      "Data Dictionary"
+end note
+
+== Read Resource Flow ==
+
+Client -[#D32F2F]> Server: request("resources/read", {uri: "berlin-group://specs/BG_oFA_AIS_..."})
+activate Server
+note right of Server
+    MCP Client requests full
+    content of a specific resource
+end note
+
+Server -[#D32F2F]> ReadHandler: handle(ReadResourceRequestSchema)
+activate ReadHandler
+
+ReadHandler -[#D32F2F]> ReadHandler: parse_uri()
+note right of ReadHandler
+    Extract filename from URI:
+    const uri = request.params.uri;
+    const fileName = uri.replace(
+        'berlin-group://specs/', ''
+    );
+end note
+
+ReadHandler -[#F57C00]> Indexer: getSpecDetails(fileName)
+activate Indexer
+
+Indexer -[#F57C00]> YamlParser: getSpecs().get(fileName)
+activate YamlParser
+YamlParser -[#F57C00]> SpecsIndex: lookup by key
+SpecsIndex --[#F57C00]> YamlParser: OpenAPISpec
+YamlParser --[#F57C00]> Indexer: spec details
+deactivate YamlParser
+
+Indexer --[#F57C00]> ReadHandler: OpenAPISpec | undefined
+deactivate Indexer
+
+alt Resource Found
+    ReadHandler -[#388E3C]> ReadHandler: format_resource_content()
+    note right of ReadHandler
+        Return resource content:
+        {
+            contents: [{
+                uri: request.params.uri,
+                mimeType: 'application/json',
+                text: JSON.stringify(spec, null, 2)
+            }]
+        }
+    end note
+    
+    ReadHandler --[#D32F2F]> Server: Resource content
+else Resource Not Found
+    ReadHandler -[#FF5722]> ReadHandler: throw Error
+    note right of ReadHandler
+        throw new Error(
+            `Specification not found: ${fileName}`
+        )
+    end note
+    
+    ReadHandler --[#FF5722]> Server: Error thrown
+end alt
+
+deactivate ReadHandler
+
+Server --[#D32F2F]> Client: Resource Content / Error Response
+deactivate Server
+
+note over Client
+    **Resource Content (JSON):**
+    Full OpenAPI specification including:
+    - openapi: "3.0.3"
+    - info: { title, version, description }
+    - servers: [...]
+    - paths: { all API endpoints }
+    - components: {
+        schemas: { all data models },
+        securitySchemes: { auth methods },
+        parameters: { common params },
+        responses: { common responses }
+      }
+end note
+
+@enduml
