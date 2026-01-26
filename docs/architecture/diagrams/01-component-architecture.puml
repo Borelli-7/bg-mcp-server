@@ -1,0 +1,121 @@
+@startuml Berlin-Group-MCP-Component-Architecture
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor<<external>> #E8F4F8
+    BackgroundColor<<core>> #B4D7E8
+    BackgroundColor<<parser>> #D4E9F7
+    BackgroundColor<<transport>> #C9E4F5
+}
+
+title Berlin Group MCP Server - Component Architecture
+
+package "MCP Server Layer" <<transport>> {
+    component "MCP Server" as MCPServer {
+        component "StdioServerTransport" as Transport
+        component "Tool Handler" as ToolHandler
+        component "Resource Handler" as ResourceHandler
+    }
+}
+
+package "Core Components" <<core>> {
+    component "Index.ts\n(Entry Point)" as Index
+    component "SpecificationIndexer" as Indexer
+}
+
+package "Parser & Processing" <<parser>> {
+    component "YamlParser" as YamlParser {
+        component "YAML Loader" as YamlLoader
+        component "OpenAPI Parser" as OpenAPIParser
+        component "Endpoint Extractor" as EndpointExtractor
+    }
+    
+    component "PdfParser" as PdfParser {
+        component "PDF Loader" as PDFLoader
+        component "PDF Text Extractor" as PDFExtractor
+        component "Content Indexer" as ContentIndexer
+    }
+}
+
+package "Data & Resources" <<external>> {
+    component "YAML Files\n(OpenAPI Specs)" as YAMLFiles
+    component "PDF Documents" as PDFDocs
+    component "Specification Index" as SpecIndex
+}
+
+package "MCP Tool Implementations" <<core>> {
+    component "Endpoint Tools" as EndpointTools {
+        note right
+            - search_endpoints
+            - get_endpoint_details
+        end note
+    }
+    
+    component "Schema Tools" as SchemaTools {
+        note right
+            - search_schemas
+            - get_schema
+        end note
+    }
+    
+    component "Specification Tools" as SpecTools {
+        note right
+            - list_specifications
+            - get_specification_details
+        end note
+    }
+    
+    component "PDF Tools" as PDFTools {
+        note right
+            - search_pdf_documentation
+            - list_pdf_documents
+        end note
+    }
+    
+    component "Search Tools" as SearchTools {
+        note right
+            - search_all
+            - get_statistics
+        end note
+    }
+}
+
+' Relationships
+Index --> MCPServer : initializes
+Index --> Indexer : creates
+Index --> EndpointTools : provides
+Index --> SchemaTools : provides
+Index --> SpecTools : provides
+Index --> PDFTools : provides
+Index --> SearchTools : provides
+
+Indexer --> YamlParser : uses
+Indexer --> PdfParser : uses
+
+YamlParser --> YAMLFiles : reads
+YamlParser --> SpecIndex : populates
+YamlLoader --> OpenAPIParser
+OpenAPIParser --> EndpointExtractor
+
+PdfParser --> PDFDocs : reads
+PdfParser --> SpecIndex : populates
+PDFLoader --> PDFExtractor
+PDFExtractor --> ContentIndexer
+
+MCPServer --> Transport : uses
+MCPServer --> ToolHandler : uses
+MCPServer --> ResourceHandler : uses
+
+ToolHandler --> EndpointTools : routes to
+ToolHandler --> SchemaTools : routes to
+ToolHandler --> SpecTools : routes to
+ToolHandler --> PDFTools : routes to
+ToolHandler --> SearchTools : routes to
+
+EndpointTools --> Indexer : queries
+SchemaTools --> Indexer : queries
+SpecTools --> Indexer : queries
+PDFTools --> Indexer : queries
+SearchTools --> Indexer : queries
+
+@enduml

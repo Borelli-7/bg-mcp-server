@@ -1,0 +1,93 @@
+@startuml Berlin-Group-MCP-Deployment-Diagram
+skinparam linetype ortho
+skinparam componentStyle rectangle
+
+title Berlin Group MCP Server - Deployment Architecture
+
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+skinparam database {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+}
+
+skinparam component {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+}
+
+node "Runtime Environment" {
+    node "Node.js Process" {
+        component "MCP Server Instance" as ServerInstance
+        component "Protocol Handler" as ProtocolHandler
+        component "Tool Router" as ToolRouter
+        component "Response Formatter" as ResponseFormatter
+        
+        component "Indexer Module" as IndexerModule
+        component "YAML Parser Instance" as YamlParserInstance
+        component "PDF Parser Instance" as PDFParserInstance
+        component "Index Cache" as IndexCache
+    }
+}
+
+database "YAML Specification Files\n(yml_files/)" as YamlDB {
+    storage "BG_oFA_AIS_Version_2.3" as AIS
+    storage "BG_oFA_PIS_Version_2.3" as PIS
+    storage "BG_oFA_PIIS_Version_2.3" as PIIS
+    storage "BG_oFA_Consent_Version_2.1" as Consent
+    storage "BG_oFA_BASK_Version_2.2" as BASK
+    storage "BG_oFA_PUSH_Version_2.2" as PUSH
+    storage "BG_oFA_dataDictionary_Version_2.2.6" as DataDict
+}
+
+database "PDF Documentation Files\n(pdf_files/)" as PdfDB {
+    storage "Implementation Guides" as PDFDocs
+}
+
+actor "MCP Client\n(Claude/IDE)" as Client
+
+' Internal connections
+ServerInstance --> ProtocolHandler
+ProtocolHandler --> ToolRouter
+ToolRouter --> IndexerModule
+IndexerModule --> YamlParserInstance
+IndexerModule --> PDFParserInstance
+YamlParserInstance --> IndexCache
+PDFParserInstance --> IndexCache
+ToolRouter --> ResponseFormatter
+ResponseFormatter --> ProtocolHandler
+
+' External connections
+Client --> ProtocolHandler : JSON-RPC\nvia stdio
+ProtocolHandler --> Client : Response
+
+' File loading
+YamlParserInstance --> AIS : reads
+YamlParserInstance --> PIS : reads
+YamlParserInstance --> PIIS : reads
+YamlParserInstance --> Consent : reads
+YamlParserInstance --> BASK : reads
+YamlParserInstance --> PUSH : reads
+YamlParserInstance --> DataDict : reads
+
+PDFParserInstance --> PDFDocs : reads
+
+note right of IndexCache
+  In-memory storage:
+  - Endpoints Map
+  - Schemas Map
+  - PDF Documents Map
+end note
+
+note bottom of Client
+  MCP Protocol Communication:
+  - ListToolsRequest
+  - CallToolRequest
+  - ListResourcesRequest
+  - ReadResourceRequest
+end note
+
+@enduml

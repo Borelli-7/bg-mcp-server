@@ -1,0 +1,165 @@
+@startuml Berlin-Group-MCP-List-Specifications-Sequence
+title Berlin Group MCP Server - List & Get Specification Details Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+database "Specs Index" as SpecsIndex
+
+== List All Specifications Flow ==
+
+Client -[#0277BD]> Server: callTool("list_specifications", {})
+activate Server
+note right of Server
+    Receive list_specifications tool call
+    No parameters required
+end note
+
+Server -[#0277BD]> Router: route_tool_call(list_specifications)
+activate Router
+
+Router -[#0277BD]> Indexer: getAllSpecs()
+activate Indexer
+
+Indexer -[#388E3C]> YamlParser: getSpecs()
+activate YamlParser
+
+YamlParser -[#388E3C]> SpecsIndex: retrieve specs Map
+SpecsIndex --[#388E3C]> YamlParser: Map<string, OpenAPISpec>
+
+YamlParser --[#388E3C]> Indexer: specs Map
+deactivate YamlParser
+
+Indexer -[#388E3C]> Indexer: map_to_summary_array()
+note right of Indexer
+    Transform Map to array:
+    Array.from(specs.values()).map(spec => ({
+        fileName: spec.fileName,
+        title: spec.title,
+        version: spec.version,
+        description: spec.description
+    }))
+end note
+
+Indexer --[#0277BD]> Router: SpecInfo[]
+deactivate Indexer
+
+Router -[#0277BD]> Router: format_specs_list()
+note right of Router
+    Result structure:
+    [
+        {
+            fileName: "BG_oFA_AIS_Version_2.3_...",
+            title: "Account Information Service API",
+            version: "3.0.3",
+            description: "Berlin Group NextGenPSD2..."
+        },
+        {
+            fileName: "BG_oFA_PIS_Version_2.3_...",
+            title: "Payment Initiation Service API",
+            version: "3.0.3",
+            description: "Payment initiation..."
+        },
+        ...
+    ]
+end note
+
+Router --[#0277BD]> Server: formatted response
+deactivate Router
+
+Server --[#0277BD]> Client: JSON-RPC Response with Specs List
+deactivate Server
+
+note over Client
+    Available Berlin Group Specifications:
+    1. AIS - Account Information Service
+    2. PIS - Payment Initiation Service
+    3. PIIS - Payment Instrument Issuer Service
+    4. Consent - Consent Management
+    5. BASK - Signing Baskets
+    6. PUSH - Push Notifications
+    7. DataDictionary - Common Data Models
+end note
+
+== Get Specification Details Flow ==
+
+Client -[#D32F2F]> Server: callTool("get_specification_details", {fileName: "BG_oFA_AIS_..."})
+activate Server
+note right of Server
+    Receive get_specification_details
+    with specific file name
+end note
+
+Server -[#D32F2F]> Router: route_tool_call(get_specification_details)
+activate Router
+
+Router -[#D32F2F]> Indexer: getSpecDetails(fileName)
+activate Indexer
+
+Indexer -[#F57C00]> YamlParser: getSpecs()
+activate YamlParser
+
+YamlParser -[#F57C00]> SpecsIndex: get(fileName)
+SpecsIndex --[#F57C00]> YamlParser: OpenAPISpec | undefined
+
+YamlParser --[#F57C00]> Indexer: spec or undefined
+deactivate YamlParser
+
+alt Specification Found
+    Indexer -[#388E3C]> Indexer: prepare_full_details()
+    note right of Indexer
+        Full OpenAPISpec object:
+        {
+            fileName: string,
+            version: "3.0.3",
+            title: "Account Information Service",
+            description: "Full description...",
+            paths: {
+                "/v1/accounts": {...},
+                "/v1/accounts/{id}": {...},
+                ...
+            },
+            components: {
+                schemas: {...},
+                securitySchemes: {...},
+                parameters: {...},
+                responses: {...}
+            }
+        }
+    end note
+    
+    Indexer --[#D32F2F]> Router: Complete OpenAPISpec
+else Specification Not Found
+    Indexer --[#D32F2F]> Router: undefined
+end alt
+
+deactivate Indexer
+
+Router -[#D32F2F]> Router: format_detail_response()
+note right of Router
+    if (spec) {
+        return JSON.stringify(spec, null, 2)
+    } else {
+        return "Specification not found"
+    }
+end note
+
+Router --[#D32F2F]> Server: formatted response
+deactivate Router
+
+Server --[#D32F2F]> Client: JSON-RPC Response with Full Spec Details
+deactivate Server
+
+note over Client
+    **AIS Specification Details:**
+    - Full API paths with operations
+    - All schemas and data models
+    - Security schemes (OAuth2, etc.)
+    - Common parameters
+    - Response definitions
+    - Server information
+end note
+
+@enduml

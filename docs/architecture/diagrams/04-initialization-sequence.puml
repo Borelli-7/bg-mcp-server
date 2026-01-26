@@ -1,0 +1,102 @@
+@startuml Berlin-Group-MCP-Initialization-Sequence
+title Berlin Group MCP Server - Initialization Sequence Diagram
+
+actor "Host Application\n(Claude/IDE)" as Host
+participant "index.ts\n(Entry Point)" as Index
+participant "MCP Server" as Server
+participant "StdioTransport" as Transport
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+participant "PdfParser" as PdfParser
+database "YAML Files\n& PDFs" as Storage
+
+Host -[#0277BD]> Index: node ./build/index.js
+activate Index
+
+Index -[#0277BD]> Indexer: new SpecificationIndexer()
+activate Indexer
+Indexer -[#0277BD]> YamlParser: new YamlParser()
+activate YamlParser
+YamlParser --[#0277BD]> Indexer: instance
+deactivate YamlParser
+
+Indexer -[#0277BD]> PdfParser: new PdfParser()
+activate PdfParser
+PdfParser --[#0277BD]> Indexer: instance
+deactivate PdfParser
+Indexer --[#0277BD]> Index: indexer instance ready
+deactivate Indexer
+
+Index -[#0277BD]> Server: new Server(options)
+activate Server
+Server --[#0277BD]> Index: server instance
+deactivate Server
+
+Index -[#0277BD]> Transport: new StdioServerTransport()
+activate Transport
+Transport --[#0277BD]> Index: transport instance
+deactivate Transport
+
+Index -[#0277BD]> Server: setRequestHandler(setup)
+Index -[#0277BD]> Server: setRequestHandler(resources)
+Index -[#0277BD]> Server: setRequestHandler(tools)
+
+Index -[#0277BD]> Indexer: initialize(yamlDir, pdfDir)
+activate Indexer
+note right of Indexer: Parallel Loading Phase
+
+par Load YAML Specifications
+    Indexer -[#388E3C]> YamlParser: loadYamlFiles(yamlDir)
+    activate YamlParser
+    YamlParser -[#388E3C]> Storage: readdir(yamlDir)
+    YamlParser <-[#388E3C]- Storage: [yaml files list]
+    
+    loop For each YAML file
+        YamlParser -[#388E3C]> Storage: readFile(filePath)
+        YamlParser <-[#388E3C]- Storage: YAML content
+        YamlParser -[#388E3C]> YamlParser: parseYamlFile()
+        YamlParser -[#388E3C]> YamlParser: extractEndpoints(spec)
+        YamlParser -[#388E3C]> YamlParser: store in specs Map
+    end
+    YamlParser --[#388E3C]> Indexer: YAML parsing complete
+    deactivate YamlParser
+else Load PDF Documents
+    Indexer -[#D32F2F]> PdfParser: loadPdfFiles(pdfDir)
+    activate PdfParser
+    PdfParser -[#D32F2F]> Storage: readdir(pdfDir)
+    PdfParser <-[#D32F2F]- Storage: [pdf files list]
+    
+    loop For each PDF file
+        PdfParser -[#D32F2F]> Storage: readFile(filePath)
+        PdfParser <-[#D32F2F]- Storage: PDF buffer
+        PdfParser -[#D32F2F]> PdfParser: pdfParse(buffer)
+        PdfParser -[#D32F2F]> PdfParser: extract text & metadata
+        PdfParser -[#D32F2F]> PdfParser: store in documents Map
+    end
+    PdfParser --[#D32F2F]> Indexer: PDF parsing complete
+    deactivate PdfParser
+end
+
+note right of Indexer: Initialization Complete
+
+Indexer --[#0277BD]> Index: specifications & PDFs indexed
+deactivate Indexer
+
+Index -[#0277BD]> Server: connect(transport)
+activate Server
+Server --[#0277BD]> Index: listening on stdio
+deactivate Server
+
+Index -[#1976D2]> Host: Ready to handle tool calls
+
+Host -[#F57C00]> Server: call_tool(search_endpoints)
+activate Server
+Server -[#F57C00]> Indexer: searchEndpoints(query)
+activate Indexer
+Indexer -[#F57C00]> Indexer: query endpoints index
+Indexer --[#F57C00]> Server: matching endpoints
+deactivate Indexer
+Server --[#F57C00]> Host: tool response
+deactivate Server
+
+@enduml

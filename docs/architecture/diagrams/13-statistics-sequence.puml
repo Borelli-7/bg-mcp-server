@@ -1,0 +1,145 @@
+@startuml Berlin-Group-MCP-Statistics-Sequence
+title Berlin Group MCP Server - Get Statistics Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "YamlParser" as YamlParser
+participant "PdfParser" as PdfParser
+database "Data Store" as Store
+
+Client -[#0277BD]> Server: callTool("get_statistics", {})
+activate Server
+note right of Server
+    Receive get_statistics tool call
+    No parameters required
+end note
+
+Server -[#0277BD]> Router: route_tool_call(get_statistics)
+activate Router
+
+Router -[#0277BD]> Indexer: getStatistics()
+activate Indexer
+
+note right of Indexer
+    Gather statistics from
+    all data sources
+end note
+
+' Count specifications
+Indexer -[#388E3C]> YamlParser: getSpecs()
+activate YamlParser
+YamlParser -[#388E3C]> Store: retrieve specs Map
+Store --[#388E3C]> YamlParser: Map<string, OpenAPISpec>
+YamlParser --[#388E3C]> Indexer: specs.size
+deactivate YamlParser
+
+' Count endpoints
+Indexer -[#1976D2]> YamlParser: getEndpoints()
+activate YamlParser
+YamlParser -[#1976D2]> Store: retrieve endpoints array
+Store --[#1976D2]> YamlParser: EndpointInfo[]
+YamlParser --[#1976D2]> Indexer: endpoints.length
+deactivate YamlParser
+
+' Count schemas
+Indexer -[#F57C00]> Indexer: getAllSchemas()
+note right of Indexer
+    Iterate all specs and
+    count component schemas
+end note
+
+' Count PDF documents
+Indexer -[#D32F2F]> PdfParser: getDocuments()
+activate PdfParser
+PdfParser -[#D32F2F]> Store: retrieve documents Map
+Store --[#D32F2F]> PdfParser: Map<string, PDFDocument>
+PdfParser --[#D32F2F]> Indexer: documents.size
+deactivate PdfParser
+
+' Calculate method distribution
+Indexer -[#7B1FA2]> Indexer: calculate_endpoints_by_method()
+note right of Indexer
+    Count endpoints per HTTP method:
+    for (const ep of endpoints) {
+        endpointsByMethod[ep.method] = 
+            (endpointsByMethod[ep.method] || 0) + 1;
+    }
+end note
+
+' Get spec list
+Indexer -[#00796B]> YamlParser: getSpecs()
+activate YamlParser
+YamlParser -[#00796B]> Store: retrieve specs Map
+Store --[#00796B]> YamlParser: Map<string, OpenAPISpec>
+YamlParser --[#00796B]> Indexer: Array.from(specs.keys())
+deactivate YamlParser
+
+Indexer -[#0277BD]> Indexer: build_statistics_object()
+note right of Indexer
+    Compile statistics:
+    {
+        totalSpecs: 7,
+        totalEndpoints: 150+,
+        totalSchemas: 200+,
+        totalPdfDocuments: N,
+        endpointsByMethod: {
+            GET: 80,
+            POST: 35,
+            PUT: 15,
+            DELETE: 20
+        },
+        specList: [
+            "BG_oFA_AIS_Version_2.3_...",
+            "BG_oFA_PIS_Version_2.3_...",
+            "BG_oFA_PIIS_Version_2.3_...",
+            "BG_oFA_Consent_Version_2.1_...",
+            "BG_oFA_BASK_Version_2.2_...",
+            "BG_oFA_PUSH_Version_2.2_...",
+            "BG_oFA_dataDictionary_..."
+        ]
+    }
+end note
+
+Indexer --[#0277BD]> Router: Statistics object
+deactivate Indexer
+
+Router -[#0277BD]> Router: format_statistics_response()
+note right of Router
+    {
+        content: [{
+            type: "text",
+            text: JSON.stringify(stats, null, 2)
+        }]
+    }
+end note
+
+Router --[#0277BD]> Server: formatted response
+deactivate Router
+
+Server --[#0277BD]> Client: JSON-RPC Response with Statistics
+deactivate Server
+
+note over Client
+    **Statistics Response Example:**
+    {
+        "totalSpecs": 7,
+        "totalEndpoints": 156,
+        "totalSchemas": 245,
+        "totalPdfDocuments": 3,
+        "endpointsByMethod": {
+            "GET": 87,
+            "POST": 34,
+            "PUT": 12,
+            "DELETE": 23
+        },
+        "specList": [
+            "BG_oFA_AIS_...",
+            "BG_oFA_PIS_...",
+            ...
+        ]
+    }
+end note
+
+@enduml

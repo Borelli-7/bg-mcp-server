@@ -1,0 +1,175 @@
+@startuml Berlin-Group-MCP-PDF-Search-Sequence
+title Berlin Group MCP Server - PDF Search & Documentation Functionality Sequence
+
+actor "User/Client" as Client
+participant "MCP Server\n(Tool Handler)" as Server
+participant "Tool Router" as Router
+participant "SpecificationIndexer" as Indexer
+participant "PdfParser" as PdfParser
+database "PDF Documents Index" as PDFIndex
+
+== Search PDF Documentation Flow ==
+
+Client -[#0277BD]> Server: callTool("search_pdf_documentation", {query: "authentication"})
+activate Server
+note right of Server: Receive search_pdf_documentation tool call
+
+Server -[#0277BD]> Router: route_tool_call(search_pdf_documentation)
+activate Router
+
+Router -[#0277BD]> Indexer: searchPdfDocuments(query)
+activate Indexer
+
+Indexer -[#D32F2F]> PdfParser: searchDocuments(query)
+activate PdfParser
+
+PdfParser -[#D32F2F]> PDFIndex: get all documents
+PDFIndex --[#D32F2F]> PdfParser: documents map
+
+PdfParser -[#D32F2F]> PdfParser: iterate_documents()
+
+loop For each PDF document
+    PdfParser -[#D32F2F]> PdfParser: search_in_document(query)
+    note right of PdfParser
+        For document.text:
+        - Split into lines
+        - Case-insensitive match
+        - Extract context (±2 lines)
+        - Limit to 10 matches/doc
+    end
+    
+    PdfParser -[#388E3C]> PdfParser: build_match_context()
+    note right of PdfParser
+        Context includes:
+        - Matched line
+        - 2 lines before
+        - 2 lines after
+        - Preserves formatting
+    end
+end
+
+PdfParser -[#D32F2F]> PdfParser: compile_search_results()
+note right of PdfParser
+    Create result structure:
+    [{
+        fileName: string,
+        title?: string,
+        pages: number,
+        matches: [{
+            context: string,
+            lineNumber?: number,
+            relevance: number
+        }]
+    }]
+end note
+
+PdfParser --[#D32F2F]> Indexer: search results
+deactivate PdfParser
+
+Indexer -[#388E3C]> Indexer: enrich_results()
+note right of Indexer
+    For each match:
+    - Add full file info
+    - Add metadata
+    - Calculate relevance score
+    - Format for display
+end note
+
+Indexer --[#0277BD]> Router: enriched PDF search results
+deactivate Indexer
+
+Router -[#0277BD]> Router: format_pdf_response()
+note right of Router
+    Structure response:
+    {
+        documents: [{
+            fileName: string,
+            title: string,
+            pages: number,
+            matches: [{
+                context: string,
+                summary: string
+            }]
+        }]
+    }
+end note
+
+Router --[#0277BD]> Server: formatted results
+deactivate Router
+
+Server --[#0277BD]> Client: JSON-RPC Response with PDF Search Results
+deactivate Server
+
+== List PDF Documents Flow ==
+
+Client -[#388E3C]> Server: callTool("list_pdf_documents")
+activate Server
+note right of Server: Receive list_pdf_documents tool call
+
+Server -[#388E3C]> Router: route_tool_call(list_pdf_documents)
+activate Router
+
+Router -[#388E3C]> Indexer: getAllPdfDocuments()
+activate Indexer
+
+Indexer -[#F57C00]> PdfParser: getAllDocumentSummaries()
+activate PdfParser
+
+PdfParser -[#F57C00]> PDFIndex: iterate all documents
+PDFIndex --[#F57C00]> PdfParser: document list
+
+PdfParser -[#F57C00]> PdfParser: build_summary()
+note right of PdfParser
+    For each document:
+    - Extract fileName
+    - Extract title/metadata
+    - Count pages
+    - Calculate size
+    - Extract keywords
+end note
+
+PdfParser --[#F57C00]> Indexer: document summaries
+deactivate PdfParser
+
+Indexer -[#388E3C]> Indexer: sort_and_organize()
+note right of Indexer
+    Sort documents:
+    - By name
+    - By file size
+    - By relevance
+end note
+
+Indexer --[#388E3C]> Router: PDF document list
+deactivate Indexer
+
+Router -[#388E3C]> Router: format_document_list()
+note right of Router
+    Structure response:
+    {
+        documents: [{
+            fileName: string,
+            title: string,
+            pages: number,
+            size?: number,
+            keywords?: string[]
+        }],
+        total: number
+    }
+end note
+
+Router --[#388E3C]> Server: formatted list
+deactivate Router
+
+Server --[#388E3C]> Client: JSON-RPC Response with PDF Document List
+deactivate Server
+
+Client -[#1976D2]> Client: display_pdf_list()
+note right of Client
+    Display:
+    - All available PDFs
+    - Document titles
+    - Page counts
+    - For user to select for search
+end note
+
+@enduml

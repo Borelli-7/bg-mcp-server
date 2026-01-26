@@ -1,0 +1,131 @@
+@startuml Berlin-Group-MCP-Package-Diagram
+!define RECTANGLE class
+skinparam package {
+    BackgroundColor<<core>> #B3E5FC
+    BackgroundColor<<parser>> #C8E6C9
+    BackgroundColor<<data>> #FFF9C4
+    BackgroundColor<<external>> #E1BEE7
+    BackgroundColor<<transport>> #FFCCBC
+}
+
+title Berlin Group MCP Server - Package Diagram
+
+package "External Dependencies" <<external>> {
+    package "@modelcontextprotocol/sdk" {
+        [Server] as MCPServer
+        [StdioServerTransport] as StdioTransport
+        [Types] as MCPTypes
+    }
+    
+    package "js-yaml" {
+        [yaml.load()] as YamlLoad
+    }
+    
+    package "pdf-parse" {
+        [pdfParse()] as PdfParseLib
+    }
+    
+    package "Node.js Built-ins" {
+        [fs/promises] as FSPromises
+        [path] as PathModule
+        [url] as URLModule
+    }
+}
+
+package "Berlin Group MCP Server" <<core>> {
+    package "Entry Point" {
+        [index.ts] as IndexModule
+        note right of IndexModule
+            - MCP Server initialization
+            - Tool registration
+            - Request handling
+            - Main entry point
+        end note
+    }
+    
+    package "Core Services" <<core>> {
+        [SpecificationIndexer] as IndexerService
+        note right of IndexerService
+            - Coordinates parsers
+            - Unified search API
+            - Statistics generation
+            - Query orchestration
+        end note
+    }
+    
+    package "Parsers" <<parser>> {
+        [YamlParser] as YamlParserModule
+        note right of YamlParserModule
+            - OpenAPI YAML parsing
+            - Endpoint extraction
+            - Schema indexing
+            - Spec metadata
+        end note
+        
+        [PdfParser] as PdfParserModule
+        note right of PdfParserModule
+            - PDF text extraction
+            - Document indexing
+            - Context search
+            - Metadata extraction
+        end note
+    }
+    
+    package "Data Models" <<data>> {
+        [OpenAPISpec] as OpenAPISpecType
+        [EndpointInfo] as EndpointType
+        [PDFDocument] as PDFDocType
+        [SpecificationIndex] as IndexType
+    }
+}
+
+package "Data Sources" <<data>> {
+    folder "yml_files/" as YamlFolder {
+        [AIS Spec] as AISSpec
+        [PIS Spec] as PISSpec
+        [PIIS Spec] as PIISSpec
+        [Consent Spec] as ConsentSpec
+        [BASK Spec] as BASKSpec
+        [PUSH Spec] as PUSHSpec
+        [DataDictionary] as DataDictSpec
+    }
+    
+    folder "pdf_files/" as PdfFolder {
+        [Implementation Guides] as ImplGuides
+        [Technical Specs] as TechSpecs
+    }
+}
+
+package "MCP Transport Layer" <<transport>> {
+    [stdio] as StdioChannel
+    [JSON-RPC Protocol] as JSONRPCProtocol
+}
+
+' Dependencies between packages
+IndexModule --> MCPServer : creates
+IndexModule --> StdioTransport : uses
+IndexModule --> IndexerService : initializes
+IndexModule --> MCPTypes : implements
+
+IndexerService --> YamlParserModule : delegates
+IndexerService --> PdfParserModule : delegates
+
+YamlParserModule --> YamlLoad : uses
+YamlParserModule --> FSPromises : reads files
+YamlParserModule --> PathModule : resolves paths
+YamlParserModule --> OpenAPISpecType : produces
+YamlParserModule --> EndpointType : produces
+YamlParserModule ..> YamlFolder : reads
+
+PdfParserModule --> PdfParseLib : uses
+PdfParserModule --> FSPromises : reads files
+PdfParserModule --> PDFDocType : produces
+PdfParserModule ..> PdfFolder : reads
+
+MCPServer --> StdioTransport : connects
+MCPServer --> JSONRPCProtocol : implements
+StdioTransport --> StdioChannel : uses
+
+IndexerService --> IndexType : maintains
+
+@enduml
