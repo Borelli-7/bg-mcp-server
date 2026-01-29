@@ -2,6 +2,19 @@ import { YamlParser, EndpointInfo, OpenAPISpec } from './yamlParser.js';
 import { PdfParser, PDFDocument } from './pdfParser.js';
 import { VectorStore, VectorSearchResult, createVectorStore } from './vectorStore.js';
 import { TextChunk } from './textChunker.js';
+import {
+  GraphIndexer,
+  createGraphIndexer,
+  IndexingResult as GraphIndexingResult,
+} from './graphIndexer.js';
+import {
+  GraphStatistics,
+  RelatedSchemaResult,
+  EndpointDependency,
+  SpecificationGraph,
+  GraphTraversalResult,
+  PatternSearchResult,
+} from './graphModels.js';
 
 export interface SpecificationIndex {
   specs: Map<string, OpenAPISpec>;
@@ -23,13 +36,16 @@ export class SpecificationIndexer {
   private yamlParser: YamlParser;
   private pdfParser: PdfParser;
   private vectorStore: VectorStore;
+  private graphIndexer: GraphIndexer;
   private initialized: boolean = false;
   private vectorStoreEnabled: boolean = false;
+  private graphStoreEnabled: boolean = false;
 
   constructor() {
     this.yamlParser = new YamlParser();
     this.pdfParser = new PdfParser();
     this.vectorStore = createVectorStore();
+    this.graphIndexer = createGraphIndexer();
   }
 
   async initialize(yamlDir: string, pdfDir: string): Promise<void> {
@@ -53,6 +69,21 @@ export class SpecificationIndexer {
     } catch (error) {
       console.warn('Vector store initialization failed, semantic search will be unavailable:', error);
       this.vectorStoreEnabled = false;
+    }
+
+    // Initialize graph store and index YAML specifications
+    try {
+      const graphResult = await this.graphIndexer.loadAndIndex(yamlDir, (progress) => {
+        console.log(`Graph indexing: ${progress.phase} - ${progress.current}/${progress.total}`);
+      });
+      this.graphStoreEnabled = true;
+      console.log(`Graph indexing complete: ${graphResult.specificationsIndexed} specs, ${graphResult.endpointsIndexed} endpoints, ${graphResult.schemasIndexed} schemas`);
+      if (graphResult.errors.length > 0) {
+        console.warn('Graph indexing had errors:', graphResult.errors);
+      }
+    } catch (error) {
+      console.warn('Graph store initialization failed, graph queries will be unavailable:', error);
+      this.graphStoreEnabled = false;
     }
 
     this.initialized = true;
@@ -293,6 +324,147 @@ export class SpecificationIndexer {
       ...basicStats,
       totalPdfChunks: vectorStats.totalChunks,
       vectorStoreEnabled: vectorStats.enabled,
+    };
+  }
+
+  // ============================================================================
+  // Graph Store Operations
+  // ============================================================================
+
+  /**
+   * Check if graph store is enabled
+   */
+  isGraphStoreEnabled(): boolean {
+    return this.graphStoreEnabled;
+  }
+
+  /**
+   * Find schemas related to a given schema (through references)
+   */
+  async findRelatedSchemas(
+    schemaName: string,
+    specFile?: string,
+    maxDepth: number = 3
+  ): Promise<RelatedSchemaResult[]> {
+    if (!this.graphStoreEnabled) {
+      console.warn('Graph store is not available');
+      return [];
+    }
+    return this.graphIndexer.findRelatedSchemas(schemaName, specFile, maxDepth);
+  }
+
+  /**
+   * Get all dependencies of an endpoint (parameters, schemas, responses)
+   */
+  async getEndpointDependencies(
+    path: string,
+    method: string,
+    specFile?: string
+  ): Promise<EndpointDependency | null> {
+    if (!this.graphStoreEnabled) {
+      console.warn('Graph store is not available');
+      return null;
+    }
+    return this.graphIndexer.getEndpointDependencies(path, method, specFile);
+  }
+
+  /**
+   * Execute a custom graph traversal
+   */
+  async traverseGraph(
+    startNodeType: string,
+    startNodeFilter: Record<string, any>,
+    relationshipTypes?: string[],
+    maxDepth: number = 3
+  ): Promise<GraphTraversalResult> {
+    if (!this.graphStoreEnabled) {
+      console.warn('Graph store is not available');
+      return { nodes: [], relationships: [], paths: [] };
+    }
+    return this.graphIndexer.traverseGraph(startNodeType, startNodeFilter, relationshipTypes, maxDepth);
+  }
+
+  /**
+   * Get the complete graph for a specification
+   */
+  async getSpecificationGraph(fileName: string): Promise<SpecificationGraph | null> {
+    if (!this.graphStoreEnabled) {
+      console.warn('Graph store is not available');
+      return null;
+    }
+    return this.graphIndexer.getSpecificationGraph(fileName);
+  }
+
+  /**
+   * Search graph nodes by pattern matching
+   */
+  async searchGraphByPattern(
+    nodeType: string,
+    pattern: Record<string, any>,
+    limit: number = 50
+  ): Promise<PatternSearchResult> {
+    if (!this.graphStoreEnabled) {
+      console.warn('Graph store is not available');
+      return { pattern: JSON.stringify(pattern), matches: [], totalMatches: 0 };
+    }
+    return this.graphIndexer.searchByPattern(nodeType, pattern, limit);
+  }
+
+  /**
+   * Get graph store statistics
+   */
+  async getGraphStoreStats(): Promise<{
+    enabled: boolean;
+    usingNeo4j: boolean;
+    statistics: GraphStatistics | null;
+    indexingResult: GraphIndexingResult | null;
+  }> {
+    if (!this.graphStoreEnabled) {
+      return {
+        enabled: false,
+        usingNeo4j: false,
+        statistics: null,
+        indexingResult: null,
+      };
+    }
+
+    return {
+      enabled: true,
+      usingNeo4j: this.graphIndexer.isUsingNeo4j(),
+      statistics: await this.graphIndexer.getStatistics(),
+      indexingResult: this.graphIndexer.getIndexingResult(),
+    };
+  }
+
+  /**
+   * Get comprehensive statistics including both vector and graph stores
+   */
+  async getComprehensiveStatistics(): Promise<{
+    totalSpecs: number;
+    totalEndpoints: number;
+    totalSchemas: number;
+    totalPdfDocuments: number;
+    totalPdfChunks: number;
+    vectorStoreEnabled: boolean;
+    graphStoreEnabled: boolean;
+    graphUsingNeo4j: boolean;
+    graphNodeCount: number;
+    graphRelationshipCount: number;
+    endpointsByMethod: Record<string, number>;
+    specList: string[];
+  }> {
+    const basicStats = this.getStatistics();
+    const vectorStats = await this.getVectorStoreStats();
+    const graphStats = await this.getGraphStoreStats();
+
+    return {
+      ...basicStats,
+      totalPdfChunks: vectorStats.totalChunks,
+      vectorStoreEnabled: vectorStats.enabled,
+      graphStoreEnabled: graphStats.enabled,
+      graphUsingNeo4j: graphStats.usingNeo4j,
+      graphNodeCount: graphStats.statistics?.nodeCount || 0,
+      graphRelationshipCount: graphStats.statistics?.relationshipCount || 0,
     };
   }
 }
