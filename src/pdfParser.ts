@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import pdfParse from 'pdf-parse';
+import { TextChunker, TextChunk, ChunkerOptions } from './textChunker.js';
 
 export interface PDFDocument {
   fileName: string;
@@ -8,10 +9,17 @@ export interface PDFDocument {
   text: string;
   pages: number;
   metadata?: any;
+  chunks?: TextChunk[];
 }
 
 export class PdfParser {
   private documents: Map<string, PDFDocument> = new Map();
+  private chunker: TextChunker;
+  private allChunks: TextChunk[] = [];
+
+  constructor(chunkerOptions?: Partial<ChunkerOptions>) {
+    this.chunker = new TextChunker(chunkerOptions);
+  }
 
   async loadPdfFiles(pdfDir: string): Promise<void> {
     try {
@@ -32,12 +40,17 @@ export class PdfParser {
       const dataBuffer = await fs.readFile(filePath);
       const data = await pdfParse(dataBuffer);
 
+      // Generate chunks from the PDF text
+      const chunks = this.chunker.chunkText(data.text, fileName);
+      this.allChunks.push(...chunks);
+
       const doc: PDFDocument = {
         fileName,
         title: data.info?.Title || fileName,
         text: data.text,
         pages: data.numpages,
         metadata: data.info,
+        chunks,
       };
 
       this.documents.set(fileName, doc);
@@ -48,6 +61,20 @@ export class PdfParser {
 
   getDocuments(): Map<string, PDFDocument> {
     return this.documents;
+  }
+
+  /**
+   * Get all chunks from all parsed PDF documents
+   */
+  getAllChunks(): TextChunk[] {
+    return this.allChunks;
+  }
+
+  /**
+   * Get chunks for a specific document
+   */
+  getDocumentChunks(fileName: string): TextChunk[] {
+    return this.documents.get(fileName)?.chunks || [];
   }
 
   searchDocuments(query: string): Array<{ fileName: string; matches: string[] }> {

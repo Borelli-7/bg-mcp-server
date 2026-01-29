@@ -1,0 +1,474 @@
+{
+  "info": {
+    "_postman_id": "berlin-group-mcp-collection-v1",
+    "name": "Berlin Group MCP Server",
+    "description": "Postman collection for testing all Berlin Group MCP Server endpoints including semantic search capabilities.\n\n## Overview\nThis collection provides tests for:\n- Endpoint search and filtering\n- Schema search and retrieval\n- PDF documentation search (keyword and semantic)\n- Statistics and metadata\n\n## Setup\n1. Start the MCP server\n2. Import this collection and the accompanying environment file\n3. Run requests individually or use the collection runner",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{MCP_SERVER_URL}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Endpoints",
+      "item": [
+        {
+          "name": "Search Endpoints",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_endpoints\",\n    \"arguments\": {\n      \"query\": \"{{search_query}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search for API endpoints matching the query string"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Endpoint Details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_endpoint_details\",\n    \"arguments\": {\n      \"path\": \"/v1/accounts\",\n      \"method\": \"GET\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get detailed information about a specific endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Endpoints by Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"filter_endpoints_by_tag\",\n    \"arguments\": {\n      \"tag\": \"accounts\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Filter endpoints by tag name"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Endpoints by Method",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 4,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"filter_endpoints_by_method\",\n    \"arguments\": {\n      \"method\": \"POST\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Filter endpoints by HTTP method"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoint-related operations"
+    },
+    {
+      "name": "Schemas",
+      "item": [
+        {
+          "name": "Search Schemas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 5,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_schemas\",\n    \"arguments\": {\n      \"query\": \"Account\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search for schemas by name or content"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 6,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_schema\",\n    \"arguments\": {\n      \"schemaName\": \"AccountReference\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get a specific schema definition"
+          },
+          "response": []
+        }
+      ],
+      "description": "Schema-related operations"
+    },
+    {
+      "name": "Specifications",
+      "item": [
+        {
+          "name": "List Specifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 7,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_specifications\",\n    \"arguments\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "List all available specifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specification Details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 8,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_specification_details\",\n    \"arguments\": {\n      \"fileName\": \"BG_oFA_AIS_Version_2.3_20250818.openapi.yaml\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get details of a specific specification"
+          },
+          "response": []
+        }
+      ],
+      "description": "Specification-related operations"
+    },
+    {
+      "name": "PDF Documentation",
+      "item": [
+        {
+          "name": "List PDF Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 9,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_pdf_documents\",\n    \"arguments\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "List all available PDF documents"
+          },
+          "response": []
+        },
+        {
+          "name": "Search PDF Documentation (Keyword)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 10,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_pdf_documentation\",\n    \"arguments\": {\n      \"query\": \"{{search_query}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search PDF documents using keyword matching"
+          },
+          "response": []
+        }
+      ],
+      "description": "PDF documentation operations"
+    },
+    {
+      "name": "Semantic Search",
+      "item": [
+        {
+          "name": "Search PDF Semantic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 11,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_pdf_semantic\",\n    \"arguments\": {\n      \"query\": \"{{semantic_query}}\",\n      \"topK\": 10\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Perform semantic search across PDF documentation using AI embeddings"
+          },
+          "response": []
+        },
+        {
+          "name": "Search PDF Semantic Filtered",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 12,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_pdf_semantic_filtered\",\n    \"arguments\": {\n      \"query\": \"{{semantic_query}}\",\n      \"fileName\": \"{{pdf_file_name}}\",\n      \"topK\": 5\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Perform semantic search with metadata filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Search All Semantic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 13,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_all_semantic\",\n    \"arguments\": {\n      \"query\": \"{{semantic_query}}\",\n      \"topK\": 10\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Comprehensive semantic search across all sources"
+          },
+          "response": []
+        }
+      ],
+      "description": "Semantic search operations powered by vector store"
+    },
+    {
+      "name": "Cross-Search",
+      "item": [
+        {
+          "name": "Search All (Keyword)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 14,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_all\",\n    \"arguments\": {\n      \"query\": \"{{search_query}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search across all sources using keyword matching"
+          },
+          "response": []
+        }
+      ],
+      "description": "Cross-source search operations"
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "Get Statistics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 15,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_statistics\",\n    \"arguments\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get general statistics about loaded specifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vector Store Stats",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 16,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_vector_store_stats\",\n    \"arguments\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get statistics about the vector store"
+          },
+          "response": []
+        }
+      ],
+      "description": "Statistics and metadata operations"
+    },
+    {
+      "name": "List Tools",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 0,\n  \"method\": \"tools/list\",\n  \"params\": {}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": ["{{baseUrl}}"]
+        },
+        "description": "List all available MCP tools"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set timestamp for logging",
+          "pm.variables.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common tests for all requests",
+          "pm.test('Response status is 200', function () {",
+          "    pm.response.to.have.status(200);",
+          "});",
+          "",
+          "pm.test('Response is valid JSON', function () {",
+          "    pm.response.to.be.json;",
+          "});",
+          "",
+          "pm.test('Response has JSON-RPC structure', function () {",
+          "    const jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.have.property('jsonrpc');",
+          "    pm.expect(jsonData.jsonrpc).to.equal('2.0');",
+          "});",
+          "",
+          "pm.test('Response has result or error', function () {",
+          "    const jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.satisfy(function(data) {",
+          "        return data.hasOwnProperty('result') || data.hasOwnProperty('error');",
+          "    });",
+          "});"
+        ]
+      }
+    }
+  ]
+}

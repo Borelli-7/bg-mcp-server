@@ -178,6 +178,76 @@ const TOOLS: Tool[] = [
       required: ['method'],
     },
   },
+  {
+    name: 'search_pdf_semantic',
+    description: 'Perform semantic search across PDF documentation using AI embeddings. Understands synonyms and concepts. Returns results ranked by relevance.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query for semantic search',
+        },
+        topK: {
+          type: 'number',
+          description: 'Number of results to return (default: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'search_pdf_semantic_filtered',
+    description: 'Perform semantic search with metadata filters (by filename or section).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query for semantic search',
+        },
+        fileName: {
+          type: 'string',
+          description: 'Filter results to a specific PDF file',
+        },
+        section: {
+          type: 'string',
+          description: 'Filter results to a specific section',
+        },
+        topK: {
+          type: 'number',
+          description: 'Number of results to return (default: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'search_all_semantic',
+    description: 'Comprehensive semantic search across all Berlin Group specifications (endpoints, schemas, and PDF documentation with AI-powered relevance ranking).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query to search across all sources',
+        },
+        topK: {
+          type: 'number',
+          description: 'Number of PDF results to return (default: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_vector_store_stats',
+    description: 'Get statistics about the vector store including chunk count and configuration.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
 ];
 
 // Create MCP server
@@ -382,6 +452,65 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'search_pdf_semantic': {
+        const topK = (args.topK as number) || 10;
+        const results = await indexer.searchPdfSemantic(args.query as string, topK);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'search_pdf_semantic_filtered': {
+        const topK = (args.topK as number) || 10;
+        const filter: { fileName?: string; section?: string } = {};
+        if (args.fileName) filter.fileName = args.fileName as string;
+        if (args.section) filter.section = args.section as string;
+        
+        const results = await indexer.searchPdfSemanticFiltered(
+          args.query as string,
+          filter,
+          topK
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'search_all_semantic': {
+        const topK = (args.topK as number) || 10;
+        const results = await indexer.searchAllSemantic(args.query as string, topK);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_vector_store_stats': {
+        const stats = await indexer.getVectorStoreStats();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(stats, null, 2),
             },
           ],
         };
