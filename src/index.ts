@@ -248,6 +248,122 @@ const TOOLS: Tool[] = [
       properties: {},
     },
   },
+  // Graph Store Tools
+  {
+    name: 'graph_find_related_schemas',
+    description: 'Find schemas related to a given schema through $ref references. Useful for understanding schema dependencies and inheritance.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        schemaName: {
+          type: 'string',
+          description: 'Name of the schema to find relations for',
+        },
+        specFile: {
+          type: 'string',
+          description: 'Optional: specific specification file to search within',
+        },
+        maxDepth: {
+          type: 'number',
+          description: 'Maximum depth of relationships to traverse (default: 3)',
+        },
+      },
+      required: ['schemaName'],
+    },
+  },
+  {
+    name: 'graph_get_endpoint_dependencies',
+    description: 'Get all dependencies of an API endpoint including parameters, request/response schemas, and related data models.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'The API endpoint path (e.g., /v1/accounts)',
+        },
+        method: {
+          type: 'string',
+          description: 'HTTP method (GET, POST, PUT, DELETE, etc.)',
+        },
+        specFile: {
+          type: 'string',
+          description: 'Optional: specific specification file',
+        },
+      },
+      required: ['path', 'method'],
+    },
+  },
+  {
+    name: 'graph_traverse_relationships',
+    description: 'Execute a custom graph traversal starting from a specific node type and filter. Returns connected nodes and relationships.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        startNodeType: {
+          type: 'string',
+          description: 'Type of starting node (Specification, Endpoint, Schema, Parameter, Response, Tag)',
+        },
+        startNodeFilter: {
+          type: 'object',
+          description: 'Property filters for the starting node (e.g., {name: "AccountReference"})',
+        },
+        relationshipTypes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional: specific relationship types to follow (DEFINES_ENDPOINT, DEFINES_SCHEMA, HAS_PARAMETER, HAS_RESPONSE, USES_SCHEMA, REFERENCES, TAGGED_WITH)',
+        },
+        maxDepth: {
+          type: 'number',
+          description: 'Maximum depth to traverse (default: 3)',
+        },
+      },
+      required: ['startNodeType', 'startNodeFilter'],
+    },
+  },
+  {
+    name: 'graph_get_specification_graph',
+    description: 'Get the complete graph structure for a specification including all endpoints, schemas, and their relationships.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        fileName: {
+          type: 'string',
+          description: 'Name of the specification file',
+        },
+      },
+      required: ['fileName'],
+    },
+  },
+  {
+    name: 'graph_search_by_pattern',
+    description: 'Search for graph nodes matching a property pattern. Supports wildcards (*) in string values.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        nodeType: {
+          type: 'string',
+          description: 'Type of node to search (Specification, Endpoint, Schema, Parameter, Response, Tag)',
+        },
+        pattern: {
+          type: 'object',
+          description: 'Property pattern to match (e.g., {path: "/v1/accounts*"} or {name: "*Account*"})',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results (default: 50)',
+        },
+      },
+      required: ['nodeType', 'pattern'],
+    },
+  },
+  {
+    name: 'get_graph_store_stats',
+    description: 'Get statistics about the graph store including node counts, relationship counts, and connection status.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
 ];
 
 // Create MCP server
@@ -506,6 +622,99 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'get_vector_store_stats': {
         const stats = await indexer.getVectorStoreStats();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(stats, null, 2),
+            },
+          ],
+        };
+      }
+
+      // Graph Store Tool Handlers
+      case 'graph_find_related_schemas': {
+        const maxDepth = (args.maxDepth as number) || 3;
+        const results = await indexer.findRelatedSchemas(
+          args.schemaName as string,
+          args.specFile as string | undefined,
+          maxDepth
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'graph_get_endpoint_dependencies': {
+        const result = await indexer.getEndpointDependencies(
+          args.path as string,
+          args.method as string,
+          args.specFile as string | undefined
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: result ? JSON.stringify(result, null, 2) : 'Endpoint not found',
+            },
+          ],
+        };
+      }
+
+      case 'graph_traverse_relationships': {
+        const maxDepth = (args.maxDepth as number) || 3;
+        const results = await indexer.traverseGraph(
+          args.startNodeType as string,
+          args.startNodeFilter as Record<string, any>,
+          args.relationshipTypes as string[] | undefined,
+          maxDepth
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'graph_get_specification_graph': {
+        const result = await indexer.getSpecificationGraph(args.fileName as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: result ? JSON.stringify(result, null, 2) : 'Specification not found',
+            },
+          ],
+        };
+      }
+
+      case 'graph_search_by_pattern': {
+        const limit = (args.limit as number) || 50;
+        const results = await indexer.searchGraphByPattern(
+          args.nodeType as string,
+          args.pattern as Record<string, any>,
+          limit
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_graph_store_stats': {
+        const stats = await indexer.getGraphStoreStats();
         return {
           content: [
             {

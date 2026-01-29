@@ -403,9 +403,169 @@
             "description": "Get statistics about the vector store"
           },
           "response": []
+        },
+        {
+          "name": "Get Graph Store Stats",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 17,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_graph_store_stats\",\n    \"arguments\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get statistics about the graph store including node and relationship counts"
+          },
+          "response": []
         }
       ],
       "description": "Statistics and metadata operations"
+    },
+    {
+      "name": "Graph Operations",
+      "item": [
+        {
+          "name": "Find Related Schemas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 18,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_find_related_schemas\",\n    \"arguments\": {\n      \"schemaName\": \"{{schema_name}}\",\n      \"specFile\": \"{{spec_file_name}}\",\n      \"maxDepth\": 3\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Find schemas related to a given schema through $ref references"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Endpoint Dependencies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 19,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_get_endpoint_dependencies\",\n    \"arguments\": {\n      \"path\": \"{{endpoint_path}}\",\n      \"method\": \"{{endpoint_method}}\",\n      \"specFile\": \"{{spec_file_name}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get all dependencies of an API endpoint including parameters, schemas, and responses"
+          },
+          "response": []
+        },
+        {
+          "name": "Traverse Relationships",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 20,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_traverse_relationships\",\n    \"arguments\": {\n      \"startNodeType\": \"Schema\",\n      \"startNodeFilter\": {\n        \"name\": \"{{schema_name}}\"\n      },\n      \"relationshipTypes\": [\"REFERENCES\"],\n      \"maxDepth\": 3\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Execute a custom graph traversal from a starting node"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specification Graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 21,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_get_specification_graph\",\n    \"arguments\": {\n      \"fileName\": \"{{spec_file_name}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Get the complete graph structure for a specification"
+          },
+          "response": []
+        },
+        {
+          "name": "Search By Pattern",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 22,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_search_by_pattern\",\n    \"arguments\": {\n      \"nodeType\": \"Endpoint\",\n      \"pattern\": {\n        \"method\": \"GET\",\n        \"path\": \"/v1/*\"\n      },\n      \"limit\": 20\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search for graph nodes matching a property pattern with wildcard support"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Schemas By Pattern",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 23,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"graph_search_by_pattern\",\n    \"arguments\": {\n      \"nodeType\": \"Schema\",\n      \"pattern\": {\n        \"name\": \"*Account*\"\n      },\n      \"limit\": 50\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Search for schemas matching a name pattern"
+          },
+          "response": []
+        }
+      ],
+      "description": "Graph database operations for exploring relationships between specifications, endpoints, and schemas"
     },
     {
       "name": "List Tools",

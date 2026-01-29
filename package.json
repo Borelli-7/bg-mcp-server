@@ -1,7 +1,7 @@
 {
   "name": "berlin-group-mcp-server",
-  "version": "1.1.0",
-  "description": "MCP server providing Berlin Group Open Finance API specifications as context with semantic search capabilities",
+  "version": "1.2.0",
+  "description": "MCP server providing Berlin Group Open Finance API specifications as context with semantic search and graph database capabilities",
   "type": "module",
   "main": "build/index.js",
   "scripts": {
@@ -21,7 +21,9 @@
     "psd2",
     "semantic-search",
     "vector-store",
-    "chromadb"
+    "chromadb",
+    "graph-database",
+    "neo4j"
   ],
   "author": "",
   "license": "MIT",
@@ -29,6 +31,7 @@
     "@modelcontextprotocol/sdk": "^1.0.4",
     "chromadb": "^1.8.1",
     "js-yaml": "^4.1.0",
+    "neo4j-driver": "^5.27.0",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
