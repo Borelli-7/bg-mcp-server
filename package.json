@@ -1,33 +1,43 @@
 {
   "name": "berlin-group-mcp-server",
-  "version": "1.0.0",
-  "description": "MCP server providing Berlin Group Open Finance API specifications as context",
+  "version": "1.1.0",
+  "description": "MCP server providing Berlin Group Open Finance API specifications as context with semantic search capabilities",
   "type": "module",
   "main": "build/index.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
     "prepare": "npm run build",
-    "inspector": "node --inspect ./build/index.js"
+    "inspector": "node --inspect ./build/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "keywords": [
     "mcp",
     "berlin-group",
     "open-finance",
     "openapi",
-    "psd2"
+    "psd2",
+    "semantic-search",
+    "vector-store",
+    "chromadb"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "chromadb": "^1.8.1",
     "js-yaml": "^4.1.0",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.5",
     "@types/pdf-parse": "^1.1.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.7.3"
   }
 }
