@@ -7,7 +7,7 @@ info:
     url: https://www.berlin-group.org/
   description: |
   title: openFinance API Framework Data Dictionary
-  version: "2.2.6"
+  version: "2.3.1"
 
 paths: {}
 
@@ -554,6 +554,14 @@ components:
         - SALE
         - AGRD
       example: 'SPOT'
+    ExecutionRuleCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Execution Rule Code\" for more details.
+      type: string
+      enum:
+        - Preceding
+        - Following
+      example: 'Preceding'
     ExternalFinancialInstrumentIdentificationTypeCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Exchange Rate Type Code\" for more details.
@@ -587,117 +595,116 @@ components:
         See document \"openFinance API Framework Data Dictionary\", section \"Exchange Rate Type Code\" for more details.
       type: string
       enum:
-        - 0090
-        - 0091
-        - 0092
-        - 0002
-        - 0221
-        - 0224
-        - 0226
-        - 0225
-        - 0222
-        - 0227
-        - 0220
-        - 0223
-        - 0001
-        - 0000
-        - BTR
-        - CKS
-        - CTR
-        - CTP
-        - DEP
-        - FFR
-        - FFS
-        - SVC
-        - DRW
-        - DRB
-        - DRC
-        - DDMC
-        - DDMP
-        - DDMU
-        - BPA
-        - IPA
-        - TRF
-        - 82
-        - 83
-        - CPP
-        - RTR
-        - GST
-        - DDT
-        - RDD
-        - CHN
-        - STR
-        - SDD
-        - SRT
-        - SRD
-        - SCN
-        - SGT
-        - CARD
-        - 05
-        - 04
-        - ISE
-        - BSE
-        - 58
-        - 19
-        - ASTI
-        - BACP
-        - MANP
-        - SBTI
-        - 85
-        - 08
-        - 89
-        - 60
-        - RIBA
-        - RIDO
-        - RIDV
-        - IDEAL
-        - INSTNT01
-        - INSTTC01
-        - INSTIDEAL
-        - INSTNT01IDEAL
-        - INSTTC01IDEAL
-        - NLDO
-        - NLUP
-        - SDN
-        - ACCEPT
-        - ICMC
-        - NLGOV
-        - IN
-        - ONCL
-        - PERI
-        - SDCL
-        - DDNR
-        - DDFA
-        - CORE
-        - B2BAMIPM
-        - B2B
-        - CR1AMIPM
-        - CORAMIPM
-        - COR1
-        - FADAMIPM
-        - CLSCCPERX
-        - CLSCCPLCH
-        - INST
-        - ADD
-        - UDD
-        - CCI
-        - IAT
-        - CCD
-        - CTX
-        - PPD
-        - CIE
-        - RCK
-        - ARC
-        - WEB
-        - POP
-        - POS
-        - TEL
-        - ITP
-        - CTP
-        - MDP
-        - IMD
-        - SOP
-        - FDP
+        - '0090'
+        - '0091'
+        - '0092'
+        - '0002'
+        - '0221'
+        - '0224'
+        - '0226'
+        - '0225'
+        - '0222'
+        - '0227'
+        - '0220'
+        - '0223'
+        - '0001'
+        - '0000'
+        - 'BTR'
+        - 'CKS'
+        - 'CTR'
+        - 'DEP'
+        - 'FFR'
+        - 'FFS'
+        - 'SVC'
+        - 'DRW'
+        - 'DRB'
+        - 'DRC'
+        - 'DDMC'
+        - 'DDMP'
+        - 'DDMU'
+        - 'BPA'
+        - 'IPA'
+        - 'TRF'
+        - '82'
+        - '83'
+        - 'CPP'
+        - 'RTR'
+        - 'GST'
+        - 'DDT'
+        - 'RDD'
+        - 'CHN'
+        - 'STR'
+        - 'SDD'
+        - 'SRT'
+        - 'SRD'
+        - 'SCN'
+        - 'SGT'
+        - 'CARD'
+        - '05'
+        - '04'
+        - 'ISE'
+        - 'BSE'
+        - '58'
+        - '19'
+        - 'ASTI'
+        - 'BACP'
+        - 'MANP'
+        - 'SBTI'
+        - '85'
+        - '08'
+        - '89'
+        - '60'
+        - 'RIBA'
+        - 'RIDO'
+        - 'RIDV'
+        - 'IDEAL'
+        - 'INSTNT01'
+        - 'INSTTC01'
+        - 'INSTIDEAL'
+        - 'INSTNT01IDEAL'
+        - 'INSTTC01IDEAL'
+        - 'NLDO'
+        - 'NLUP'
+        - 'SDN'
+        - 'ACCEPT'
+        - 'ICMC'
+        - 'NLGOV'
+        - 'IN'
+        - 'ONCL'
+        - 'PERI'
+        - 'SDCL'
+        - 'DDNR'
+        - 'DDFA'
+        - 'CORE'
+        - 'B2BAMIPM'
+        - 'B2B'
+        - 'CR1AMIPM'
+        - 'CORAMIPM'
+        - 'COR1'
+        - 'FADAMIPM'
+        - 'CLSCCPERX'
+        - 'CLSCCPLCH'
+        - 'INST'
+        - 'ADD'
+        - 'UDD'
+        - 'CCI'
+        - 'IAT'
+        - 'CCD'
+        - 'CTX'
+        - 'PPD'
+        - 'CIE'
+        - 'RCK'
+        - 'ARC'
+        - 'WEB'
+        - 'POP'
+        - 'POS'
+        - 'TEL'
+        - 'ITP'
+        - 'CTP'
+        - 'MDP'
+        - 'IMD'
+        - 'SOP'
+        - 'FDP'
       example: 'CORE'
     FinancialInstitutionIdentificationCode:
       description: |
@@ -1113,7 +1120,6 @@ components:
       type: string
       enum: 
         - CERTIFICATE_INVALID
-        - ROLE_INVALID
         - CERTIFICATE_EXPIRED
         - CERTIFICATE_BLOCKED
         - CERTIFICATE_REVOKED
@@ -6744,7 +6750,7 @@ components:
             $ref: '#/components/schemas/Max35Text'
         globalStatementsSupported:
           description: |
-            Defines whether statements on a dedicated endpoint /statements as introduced in [oFA TDM] are supported within this service type or not.
+            Defines whether statements on a dedicated endpoint /statements as introduced in [oFA-IG-XAIS] are supported within this service type or not.
           type: boolean
         supportedEndpoints:
           description: |
@@ -9757,8 +9763,19 @@ components:
         See document \"openFinance API Framework Data Dictionary\", section \"Standing Order Details\" for more details.
       type: object
       required:
+        - paymentProduct
+        - paymentId
         - frequency
       properties:
+        paymentProduct:
+          description: |
+            Only included for AIS. This yields the payment product of the standing order resource.
+          type: string  
+        paymentId:
+          description: |
+            Only included for AIS. Resource Identifier of the standing order resource.
+          allOf:
+            - $ref: '#/components/schemas/UUID'
         startDate:
           description: |
             The first applicable day of execution starting from this date the first payment was/will be executed.
@@ -9783,12 +9800,18 @@ components:
             The ASPSP might restrict the implementation to endDate. This restriction will be part of the ASPSP documentation.
           allOf:
             - $ref: '#/components/schemas/ISODateTime'
+        displayName:
+          description: |
+            Name of the standing order defined by the PSU and displayed within the online channels.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
         executionRule:
           description: |
             \"following\" or \"preceding\" supported as values.
             This data attribute defines the behavior when a transaction date resulting from a standing order falls on a weekend or bank holiday.
             The payment is then executed either the \"preceding\" or \"following\" working day.
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/ExecutionRuleCode'
         withinAMonthFlag:
           description: |
             This element is only used in case of frequency equals \"Monthly\".

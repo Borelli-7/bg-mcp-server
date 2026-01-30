@@ -22,7 +22,7 @@ info:
     documents:
       - document:
         title: openFinance API Framework Data Dictionary
-        version: "2.2.6"
+        version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
         version: "2.2"
@@ -490,6 +490,7 @@ components:
           - JAdES_JS
           - XAdES
           - EMV_AC
+          - EUDIW
       example: 'XAdES'
     HEADER_contentType_mandatory:
       name: Content-Type
