@@ -19,7 +19,7 @@ info:
     documents:
       - document:
         title: openFinance API Framework Data Dictionary
-        version: "2.2.6"
+        version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
         version: "2.2"
@@ -310,7 +310,7 @@ paths:
                       description: |
                         Frequency of the recurring payment resulting from this standing order. 
                       allOf:
-                        - $ref: '#/components/schemas/FrequencyCode'
+                        - $ref: '#/components/schemas/EventFrequencyCode'
                     dayOfExecution:
                       description: |
                         \"31\" is ultimo
@@ -924,20 +924,6 @@ components:
       type: string
       pattern: '[A-Z]{3}'
       example: 'EUR'
-    FrequencyCode:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
-      type: string
-      enum:
-        - YEAR
-        - MNTH
-        - QURT
-        - MIAN
-        - WEEK
-        - DAIL
-        - ADHO
-        - INDA
-        - FRTN
     clientMessageInformation_409_AUTHORISATION:
       type: object
       required:
@@ -1958,7 +1944,7 @@ components:
               description: |
                 The frequency of the recurring payment resulting from this standing order.
               allOf:
-                - $ref: '#/components/schemas/FrequencyCode'
+                - $ref: '#/components/schemas/EventFrequencyCode'
             dayOfExecution:
               description: |
                  \"31\" is ultimo. The format is following the regular expression \d{1,2}. Example: The first day is addressed by \"1\". 
@@ -3317,117 +3303,116 @@ components:
         See document \"openFinance API Framework Data Dictionary\", section \"Exchange Rate Type Code\" for more details.
       type: string
       enum:
-        - 0090
-        - 0091
-        - 0092
-        - 0002
-        - 0221
-        - 0224
-        - 0226
-        - 0225
-        - 0222
-        - 0227
-        - 0220
-        - 0223
-        - 0001
-        - 0000
-        - BTR
-        - CKS
-        - CTR
-        - CTP
-        - DEP
-        - FFR
-        - FFS
-        - SVC
-        - DRW
-        - DRB
-        - DRC
-        - DDMC
-        - DDMP
-        - DDMU
-        - BPA
-        - IPA
-        - TRF
-        - 82
-        - 83
-        - CPP
-        - RTR
-        - GST
-        - DDT
-        - RDD
-        - CHN
-        - STR
-        - SDD
-        - SRT
-        - SRD
-        - SCN
-        - SGT
-        - CARD
-        - 05
-        - 04
-        - ISE
-        - BSE
-        - 58
-        - 19
-        - ASTI
-        - BACP
-        - MANP
-        - SBTI
-        - 85
-        - 08
-        - 89
-        - 60
-        - RIBA
-        - RIDO
-        - RIDV
-        - IDEAL
-        - INSTNT01
-        - INSTTC01
-        - INSTIDEAL
-        - INSTNT01IDEAL
-        - INSTTC01IDEAL
-        - NLDO
-        - NLUP
-        - SDN
-        - ACCEPT
-        - ICMC
-        - NLGOV
-        - IN
-        - ONCL
-        - PERI
-        - SDCL
-        - DDNR
-        - DDFA
-        - CORE
-        - B2BAMIPM
-        - B2B
-        - CR1AMIPM
-        - CORAMIPM
-        - COR1
-        - FADAMIPM
-        - CLSCCPERX
-        - CLSCCPLCH
-        - INST
-        - ADD
-        - UDD
-        - CCI
-        - IAT
-        - CCD
-        - CTX
-        - PPD
-        - CIE
-        - RCK
-        - ARC
-        - WEB
-        - POP
-        - POS
-        - TEL
-        - ITP
-        - CTP
-        - MDP
-        - IMD
-        - SOP
-        - FDP
+        - '0090'
+        - '0091'
+        - '0092'
+        - '0002'
+        - '0221'
+        - '0224'
+        - '0226'
+        - '0225'
+        - '0222'
+        - '0227'
+        - '0220'
+        - '0223'
+        - '0001'
+        - '0000'
+        - 'BTR'
+        - 'CKS'
+        - 'CTR'
+        - 'DEP'
+        - 'FFR'
+        - 'FFS'
+        - 'SVC'
+        - 'DRW'
+        - 'DRB'
+        - 'DRC'
+        - 'DDMC'
+        - 'DDMP'
+        - 'DDMU'
+        - 'BPA'
+        - 'IPA'
+        - 'TRF'
+        - '82'
+        - '83'
+        - 'CPP'
+        - 'RTR'
+        - 'GST'
+        - 'DDT'
+        - 'RDD'
+        - 'CHN'
+        - 'STR'
+        - 'SDD'
+        - 'SRT'
+        - 'SRD'
+        - 'SCN'
+        - 'SGT'
+        - 'CARD'
+        - '05'
+        - '04'
+        - 'ISE'
+        - 'BSE'
+        - '58'
+        - '19'
+        - 'ASTI'
+        - 'BACP'
+        - 'MANP'
+        - 'SBTI'
+        - '85'
+        - '08'
+        - '89'
+        - '60'
+        - 'RIBA'
+        - 'RIDO'
+        - 'RIDV'
+        - 'IDEAL'
+        - 'INSTNT01'
+        - 'INSTTC01'
+        - 'INSTIDEAL'
+        - 'INSTNT01IDEAL'
+        - 'INSTTC01IDEAL'
+        - 'NLDO'
+        - 'NLUP'
+        - 'SDN'
+        - 'ACCEPT'
+        - 'ICMC'
+        - 'NLGOV'
+        - 'IN'
+        - 'ONCL'
+        - 'PERI'
+        - 'SDCL'
+        - 'DDNR'
+        - 'DDFA'
+        - 'CORE'
+        - 'B2BAMIPM'
+        - 'B2B'
+        - 'CR1AMIPM'
+        - 'CORAMIPM'
+        - 'COR1'
+        - 'FADAMIPM'
+        - 'CLSCCPERX'
+        - 'CLSCCPLCH'
+        - 'INST'
+        - 'ADD'
+        - 'UDD'
+        - 'CCI'
+        - 'IAT'
+        - 'CCD'
+        - 'CTX'
+        - 'PPD'
+        - 'CIE'
+        - 'RCK'
+        - 'ARC'
+        - 'WEB'
+        - 'POP'
+        - 'POS'
+        - 'TEL'
+        - 'ITP'
+        - 'CTP'
+        - 'MDP'
+        - 'IMD'
+        - 'SOP'
+        - 'FDP'
       example: 'CORE'
     clientMessageInformation_405_PIS_CANC:
       type: object
@@ -4074,7 +4059,7 @@ components:
               description: |
                 The frequency of the recurring payment resulting from this standing order.
               allOf:
-                - $ref: '#/components/schemas/FrequencyCode'
+                - $ref: '#/components/schemas/EventFrequencyCode'
             dayOfExecution:
               description: |
                  \"31\" is ultimo. The format is following the regular expression \d{1,2}. Example: The first day is addressed by \"1\". 
@@ -4575,6 +4560,21 @@ components:
           type: string
         text:
           $ref: '#/components/schemas/Max500Text'
+    EventFrequencyCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Event Frequency Code\" for more details.
+      type: string
+      enum:
+        - Daily
+        - Weekly
+        - EveryTwoWeeks
+        - Monthly
+        - EveryTwoMonths
+        - Quarterly
+        - SemiAnnual
+        - Annual
+        - MonthlyVariable
+      example: 'Monthly'
     PriorityCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Priority Code\" for more details.
@@ -4822,7 +4822,6 @@ components:
       type: string
       enum: 
         - CERTIFICATE_INVALID
-        - ROLE_INVALID
         - CERTIFICATE_EXPIRED
         - CERTIFICATE_BLOCKED
         - CERTIFICATE_REVOKED
@@ -5539,7 +5538,7 @@ components:
               description: |
                 The frequency of the recurring payment resulting from this standing order.
               allOf:
-                - $ref: '#/components/schemas/FrequencyCode'
+                - $ref: '#/components/schemas/EventFrequencyCode'
             dayOfExecution:
               description: |
                  \"31\" is ultimo. The format is following the regular expression \d{1,2}. Example: The first day is addressed by \"1\". 
@@ -6389,7 +6388,7 @@ components:
               description: |
                 The frequency of the recurring payment resulting from this standing order.
               allOf:
-                - $ref: '#/components/schemas/FrequencyCode'
+                - $ref: '#/components/schemas/EventFrequencyCode'
             dayOfExecution:
               description: |
                  \"31\" is ultimo. The format is following the regular expression \d{1,2}. Example: The first day is addressed by \"1\". 
@@ -7126,7 +7125,7 @@ components:
               description: |
                 The frequency of the recurring payment resulting from this standing order.
               allOf:
-                - $ref: '#/components/schemas/FrequencyCode'
+                - $ref: '#/components/schemas/EventFrequencyCode'
             dayOfExecution:
               description: |
                  \"31\" is ultimo. The format is following the regular expression \d{1,2}. Example: The first day is addressed by \"1\". 
@@ -7293,7 +7292,7 @@ components:
       in: header
       description: |
         A comma separated list of attributes, where the first entry will have a higher priority than the next or to every SCA Approach which is not indicated at all, e.g.
-        \"decoupled, redirect, embedded\"
+        \"decoupled, redirect, embedded, signature\"
         or 
         \"decoupled\"
         This attribute may be ignored by the ASPSP
@@ -7334,6 +7333,7 @@ components:
           - JAdES_JS
           - XAdES
           - EMV_AC
+          - EUDIW
       example: 'XAdES'
     HEADER_psuAcceptCharset:
       name: PSU-Accept-Charset
@@ -7795,6 +7795,7 @@ components:
           * DECOUPLED
           * REDIRECT
           * ASPSP-CHANNEL
+          * SIGNATURE
         The OAuth SCA approach will be subsumed by REDIRECT.
       schema:
         type: string
@@ -7880,7 +7881,7 @@ components:
                     description: |
                       Frequency of the recurring payment resulting from this standing order. 
                     allOf:
-                      - $ref: '#/components/schemas/FrequencyCode'
+                      - $ref: '#/components/schemas/EventFrequencyCode'
                   dayOfExecution:
                     description: |
                       \"31\" is ultimo

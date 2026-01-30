@@ -17,7 +17,7 @@ info:
     documents:
       - document:
         title: openFinance API Framework Data Dictionary
-        version: "2.2.6"
+        version: "2.3.1"
       - document:
         title: openFinance API Framework XS2A API as PSD2 Interface Implementation Guidelines
         version: "2.3"
@@ -1441,7 +1441,6 @@ components:
       type: string
       enum: 
         - CERTIFICATE_INVALID
-        - ROLE_INVALID
         - CERTIFICATE_EXPIRED
         - CERTIFICATE_BLOCKED
         - CERTIFICATE_REVOKED
@@ -1531,6 +1530,7 @@ components:
           - JAdES_JS
           - XAdES
           - EMV_AC
+          - EUDIW
       example: 'XAdES'
     HEADER_xJwsSignature:
       name: x-jws-signature

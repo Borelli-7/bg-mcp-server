@@ -6,31 +6,26 @@ info:
     name: The Berlin Group - A European Standards Initiative
     url: https://www.berlin-group.org/
   description: |
-    XS2A and the openFinance API have to deal with PSU consent for very different scenarios since the API client 
-    can access sensitive PSU data via the API. The legal text [PSD2] and [EBA-RTS] introduces the notion of consent 
-    for AIS, PIS as well as PIIS. In addition, operational rules of premium services might add requirements on PSU consent for services introduced at all times.
+    The signing basket is a function of the openFinance API Framework to bundle several transactions for authorisation. 
+    The SCA is then covering all transactions within the signing basket simultaneously. 
+    The ASPSP offering this service can restrict the bundling of transactions to certain transaction types, e.g. payments only. 
   license:
     name: Creative Commons Attribution 4.0 International Public License
     url: https://creativecommons.org/licenses/by/4.0/
-  title: Consent API for V2.x
-  version: "2.1"
+  title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures for V2.x- Signing Basket API
+  version: "2.2"
   x-references:
     documents:
       - document:
         title: openFinance API Framework Data Dictionary
-        version: "2.2.6"
-      - document:
-        title: openFinance API Framework Implementation Guidelines Consent API for V2.x
-        version: "2.1"
+        version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
         version: "2.2"
 
 externalDocs:
   description: |
-    openFinance API Framework
-    Implementation Guidelines
-    Consent API for V2.x
+    \"openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures\"
   url: https://www.berlin-group.org/openfinance-downloads
 
 servers:
@@ -40,23 +35,23 @@ servers:
     description: Optional PSD2 test server
 
 tags:
-  - name: Consent API
+  - name: Signing Basket API
     description: |
-      The Consent API offers the following services:
-        * Establishment of a consent
-        * Content information on a consent
-        * Status information on a consent
-        * Cancellation of a consent
+      The Signing Basket API offers the following services:
+        * Creation of a signing basket resource
+        * Content information on a signing basket
+        * Status information on a signing basket
+        * Cancellation of a signing basket
 
 paths:
-  /v2/consents/account-access:
+  /v2/signing-baskets:
     post:
-      summary: Consent Request for Account Information
+      summary: Establish Signing Basket Request
       description: | 
-        Creates an account information consent resource at the ASPSP regarding access to account information to account types and accounts specified in this request.
-      operationId: establishConsentForAccountInformation
+        Generates a signing basket
+      operationId: establishSigningBasket
       tags:
-        - Consent API
+        - Signing Basket API
       security:
         - {}
         - BearerAuthOAuth: []
@@ -87,6 +82,8 @@ paths:
         - $ref: '#/components/parameters/HEADER_bodySigProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncList'
+        - $ref: '#/components/parameters/HEADER_contentType_mandatory'
+        - $ref: '#/components/parameters/HEADER_consentId_optional'
         - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
       requestBody:
         required: true
@@ -94,652 +91,183 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - access
-                - consentType
-                - recurringIndicator
-                - validTo
-                - frequencyPerDay
               properties:
-                access:
+                paymentIds:
+                 description: |
+                    A non-empty array of paymentIds.
+                 type: array
+                 minItems: 1
+                 items: 
+                   $ref: '#/components/schemas/Max70Text'
+                consentIds:
                   description: |
-                    Requested access services.
-                  allOf:
-                    - $ref: '#/components/schemas/accountAccess'
-                consentType:
-                  description: |
-                    The technical consent type. 
-                    NOTE: The choice of this type has an effect on attribute conditions in the \"access\" attribute, see below.
-                  allOf:
-                    - $ref: '#/components/schemas/ConsentTypeCode'
-                recurringIndicator:
-                  description: |
-                    true, if the consent is for recurring access to the account data
-                    false, if the consent is for one access to the account data
-                  type: boolean
-                validTo:
-                  description: |
-                    This parameter is defining a valid until date (including the mentioned date) for the requested consent. 
-                    The content is the local ASPSP date in ISODate Format, e.g. 2024-10-30. 
-                    Future dates might get adjusted by ASPSP.
-                    If a maximum available date is requested, a date in far future is to be used: \"9999-12-31\". 
-                    In both cases, the consent object to be retrieved by the GET Consent Request will contain the adjusted date.
-                    The support of this adaption of the maximum available date is mandatory for the ASPSP.
-                  allOf:
-                    - $ref: '#/components/schemas/ISODate'
-                frequencyPerDay:
-                  description: |
-                    This field indicates the requested maximum frequency for an access without PSU involvement per day. For a one-off access, this attribute is set to \"1\".
-                    The frequency needs to be greater equal to one. If not otherwise agreed bilaterally between TPP and ASPSP, the frequency is less equal to 4.
-                  type: integer
-      responses:
-        '201':
-          $ref: '#/components/responses/created_201_CONSENT_ACCOUNT'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/account-access/{consentId}:
-    get:
-      summary: Get Consent Request for Account Information
-      description: | 
-        Reads the content of a consent object regarding access to account information.
-      operationId: getConsentForAccountInformation
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PATH_consentId'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-      responses:
-        '200':
-          $ref: '#/components/responses/OK_200_CONSENT_ACCOUNT'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/funds-confirmations:
-    post:
-      summary: Consent Request on Funds Confirmation
-      description: | 
-        Creates a consent resource at the ASPSP regarding confirmation of funds access to an account specified in this request.
-      operationId: establishConsentOnFundsConfirmation
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/HEADER_psuIpPort'
-        - $ref: '#/components/parameters/HEADER_psuAccept'
-        - $ref: '#/components/parameters/HEADER_psuAcceptCharset'
-        - $ref: '#/components/parameters/HEADER_psuAcceptEncoding'
-        - $ref: '#/components/parameters/HEADER_psuAcceptLanguage'
-        - $ref: '#/components/parameters/HEADER_psuUserAgent'
-        - $ref: '#/components/parameters/HEADER_psuHttpMethod'
-        - $ref: '#/components/parameters/HEADER_psuDeviceId'
-        - $ref: '#/components/parameters/HEADER_psuGeoLocation'
-        - $ref: '#/components/parameters/HEADER_psuId'
-        - $ref: '#/components/parameters/HEADER_psuIdType'
-        - $ref: '#/components/parameters/HEADER_psuCorporateId'
-        - $ref: '#/components/parameters/HEADER_psuCorporateIdType'
-        - $ref: '#/components/parameters/HEADER_clientScaApproachPreference'
-        - $ref: '#/components/parameters/HEADER_clientRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientNokRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientExplicitAuthorisationPreferred'
-        - $ref: '#/components/parameters/HEADER_clientNotificationUri'
-        - $ref: '#/components/parameters/HEADER_clientNotificationContentPreferred'
-        - $ref: '#/components/parameters/HEADER_clientBrandLoggingInformation'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-        - $ref: '#/components/parameters/HEADER_bodySigProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
-      requestBody:
-        required: true
-        content: 
-          application/json:
-            schema:
-              type: object
-              required:
-                - access
-                - consentType
-                - recurringIndicator
-                - validTo
-              properties:
-                access:
-                  description: |
-                    requested access rights on accounts, where the confirmation of funds service is aimed to be submitted to.
-                  allOf:
-                    - $ref: '#/components/schemas/accountAccess'
-                consentType:
-                  description: |
-                    Only the consentTypes \"detailed\" and \"aspspManaged\" may be supported.
-                  allOf:
-                    - $ref: '#/components/schemas/ConsentTypeCode'
-                recurringIndicator:
-                  description: |
-                    true, if the consent is for recurring access to the account data
-                    false, if the consent is for one access to the account data
-                  type: boolean
-                validTo:
-                  description: |
-                    This parameter is defining a valid until date (including the mentioned date) for the requested consent. 
-                    The content is the local ASPSP date in ISODate Format, e.g. 2024-10-30. 
-                    Future dates might get adjusted by ASPSP.
-                    If a maximum available date is requested, a date in far future is to be used: \"9999-12-31\". 
-                    In both cases, the consent object to be retrieved by the GET Consent Request will contain the adjusted date.
-                    The support of this adaption of the maximum available date is mandatory for the ASPSP.
-                  allOf:
-                    - $ref: '#/components/schemas/ISODate'
-                cardNumber:
-                  description: |
-                    Card Number of the card issued by the PIISP. Should be delivered if available.
-                  allOf:
-                    - $ref: '#/components/schemas/Max35Text'
-                cardExpiryDate:
-                  description: |
-                    Expiry date of the card issued by the PIISP
-                  allOf:
-                    - $ref: '#/components/schemas/ISODate'
-                cardInformation:
-                  description: |
-                    Additional explanation for the card product.
-                  allOf:
-                    - $ref: '#/components/schemas/Max140Text'
-                registrationInformation:
-                  description: |
-                    Additional information about the registration process for the PSU, e.g. a reference to the TPP / PSU contract
-                  allOf:
-                    - $ref: '#/components/schemas/Max140Text'
-      responses:
-        '201':
-          $ref: '#/components/responses/created_201_CONSENT_OTHER'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/funds-confirmations/{consentId}:
-    get:
-      summary: Get Consent Request on Funds Confirmation
-      description: | 
-        Reads the content of a consent object regarding confirmation of funds access.
-      operationId: getConsentOnFundsConfirmation
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PATH_consentId'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-      responses:
-        '200':
-          $ref: '#/components/responses/OK_200_CONSENT_PIIS'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/user-parameters-access:
-    post:
-      summary: Consent Request on User Parameters Access
-      description: | 
-        Creates a consent resource on user related technical access data (user parameters) at the ASPSP regarding accounts addressed in this request.
-      operationId: establishConsentOnUserParametersAccess
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/HEADER_psuIpPort'
-        - $ref: '#/components/parameters/HEADER_psuAccept'
-        - $ref: '#/components/parameters/HEADER_psuAcceptCharset'
-        - $ref: '#/components/parameters/HEADER_psuAcceptEncoding'
-        - $ref: '#/components/parameters/HEADER_psuAcceptLanguage'
-        - $ref: '#/components/parameters/HEADER_psuUserAgent'
-        - $ref: '#/components/parameters/HEADER_psuHttpMethod'
-        - $ref: '#/components/parameters/HEADER_psuDeviceId'
-        - $ref: '#/components/parameters/HEADER_psuGeoLocation'
-        - $ref: '#/components/parameters/HEADER_psuId'
-        - $ref: '#/components/parameters/HEADER_psuIdType'
-        - $ref: '#/components/parameters/HEADER_psuCorporateId'
-        - $ref: '#/components/parameters/HEADER_psuCorporateIdType'
-        - $ref: '#/components/parameters/HEADER_clientScaApproachPreference'
-        - $ref: '#/components/parameters/HEADER_clientRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientNokRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientExplicitAuthorisationPreferred'
-        - $ref: '#/components/parameters/HEADER_clientNotificationUri'
-        - $ref: '#/components/parameters/HEADER_clientNotificationContentPreferred'
-        - $ref: '#/components/parameters/HEADER_clientBrandLoggingInformation'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-        - $ref: '#/components/parameters/HEADER_bodySigProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
-      requestBody:
-        required: true
-        content: 
-          application/json:
-            schema:
-              type: object
-              required:
-                - access
-                - consentType
-                - recurringIndicator
-                - validTo
-              properties:
-                access:
-                  description: |
-                    Requested access services.
-                  allOf:
-                    - $ref: '#/components/schemas/accountAccess'
-                consentType:
-                  description: |
-                    The technical consent type. 
-                    NOTE: The choice of this type has an effect on attribute conditions in the \"access\" attribute, see below.
-                  allOf:
-                    - $ref: '#/components/schemas/ConsentTypeCode'
-                recurringIndicator:
-                  description: |
-                    true, if the consent is for recurring access to the account data
-                    false, if the consent is for one access to the account data
-                  type: boolean
-                validTo:
-                  description: |
-                    This parameter is defining a valid until date (including the mentioned date) for the requested consent. 
-                    The content is the local ASPSP date in ISODate Format, e.g. 2024-10-30. 
-                    Future dates might get adjusted by ASPSP.
-                    If a maximum available date is requested, a date in far future is to be used: \"9999-12-31\". 
-                    In both cases, the consent object to be retrieved by the GET Consent Request will contain the adjusted date.
-                    The support of this adaption of the maximum available date is mandatory for the ASPSP.
-                  allOf:
-                    - $ref: '#/components/schemas/ISODate'
-      responses:
-        '201':
-          $ref: '#/components/responses/created_201_CONSENT_OTHER'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/user-parameters-access/{consentId}:
-    get:
-      summary: Get Consent Request on User Parameters Access
-      description: | 
-        Reads the content of a consent object regarding user related technical access data (user parameters).
-      operationId: getConsentOnUserParametersAccess
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PATH_consentId'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-      responses:
-        '200':
-          $ref: '#/components/responses/OK_200_CONSENT_USERPARAMETERS'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/document-services:
-    post:
-      summary: Consent Request on Document Services
-      description: | 
-        Creates a consent resource on user document services resource at the ASPSP regarding explicitly confirming the consent to submit RTPs to (a) dedicated account(s).
-      operationId: establishConsentOnDocumentServices
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/HEADER_psuIpPort'
-        - $ref: '#/components/parameters/HEADER_psuAccept'
-        - $ref: '#/components/parameters/HEADER_psuAcceptCharset'
-        - $ref: '#/components/parameters/HEADER_psuAcceptEncoding'
-        - $ref: '#/components/parameters/HEADER_psuAcceptLanguage'
-        - $ref: '#/components/parameters/HEADER_psuUserAgent'
-        - $ref: '#/components/parameters/HEADER_psuHttpMethod'
-        - $ref: '#/components/parameters/HEADER_psuDeviceId'
-        - $ref: '#/components/parameters/HEADER_psuGeoLocation'
-        - $ref: '#/components/parameters/HEADER_psuId'
-        - $ref: '#/components/parameters/HEADER_psuIdType'
-        - $ref: '#/components/parameters/HEADER_psuCorporateId'
-        - $ref: '#/components/parameters/HEADER_psuCorporateIdType'
-        - $ref: '#/components/parameters/HEADER_clientScaApproachPreference'
-        - $ref: '#/components/parameters/HEADER_clientRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientNokRedirectUri'
-        - $ref: '#/components/parameters/HEADER_clientExplicitAuthorisationPreferred'
-        - $ref: '#/components/parameters/HEADER_clientNotificationUri'
-        - $ref: '#/components/parameters/HEADER_clientNotificationContentPreferred'
-        - $ref: '#/components/parameters/HEADER_clientBrandLoggingInformation'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-        - $ref: '#/components/parameters/HEADER_bodySigProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncProfile'
-        - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
-      requestBody:
-        required: true
-        content: 
-          application/json:
-            schema:
-              type: object
-              required:
-                - access
-                - consentType
-                - validTo
-              properties:
-                access:
-                  description: |
-                    requested access rights on account(s), where  the document services are intended to be addressed to.
-                  allOf:
-                    - $ref: '#/components/schemas/accountAccess'
-                consentType:
-                  description: |
-                    Only the consentTypes \"detailed\" and \"aspspManaged\" may be supported.
-                  allOf:
-                    - $ref: '#/components/schemas/ConsentTypeCode'
-                documentOriginator:
-                  description: |
-                    The details of the sender of a document or the creditor of the related payments. 
-                    Shall be used by the API Client, if the consent is on the pair (Originator-RTPSP, RTP-Originator) in case of RTP. 
-                    RFU: This is to be defined later for the document postal services.
-                  allOf:
-                    - $ref: '#/components/schemas/creditorDetailsAndAccount'
-                documentTypes:
-                  description: |
-                    Might be mandated by API Access Schemes or bilateral contracts.
+                     A non-empty array of consentIds.
                   type: array
-                  items:
-                    $ref: '#/components/schemas/DocumentTypeCode'
-                additionalRequestInformation:
+                  minItems: 1
+                  items: 
+                    $ref: '#/components/schemas/Max70Text'
+                subscriptionIds:
                   description: |
-                    Is used only in case of an Originator-RTPSP-Aggregator as API Client.
-                  allOf:
-                    - $ref: '#/components/schemas/additionalRequestInformation1'
-                validTo:
+                     A non-empty array of subscriptionIds.
+                  type: array
+                  minItems: 1
+                  items: 
+                    $ref: '#/components/schemas/Max70Text'
+                subscriptionEntryIds:
                   description: |
-                    This parameter is defining a valid until date (including the mentioned date) for the requested consent. 
-                    The content is the local ASPSP date in ISODate Format, e.g. 2024-10-30. 
-                    Future dates might get adjusted by ASPSP.
-                    If a maximum available date is requested, a date in far future is to be used: \"9999-12-31\". 
-                    In both cases, the consent object to be retrieved by the GET Consent Request will contain the adjusted date.
-                    The support of this adaption of the maximum available date is mandatory for the ASPSP.
-                  allOf:
-                    - $ref: '#/components/schemas/ISODate'
-                registrationInformation:
+                     A non-empty array of subscriptionEntryIds.
+                  type: array
+                  minItems: 1
+                  items: 
+                    $ref: '#/components/schemas/Max70Text'
+                mandateResourceIds:
                   description: |
-                    Additional information about the registration process for the PSU, e.g. a reference to the TPP / PSU contract
-                  allOf:
-                    - $ref: '#/components/schemas/Max140Text'
+                     A non-empty array of mandateResourceIds.
+                  type: array
+                  minItems: 1
+                  items: 
+                    $ref: '#/components/schemas/Max70Text'
       responses:
         '201':
-          $ref: '#/components/responses/created_201_CONSENT_OTHER'
+          $ref: '#/components/responses/created_201_SIGNINGBASKET'
         '400':
-          $ref: '#/components/responses/decline_400_AIS'
+          $ref: '#/components/responses/decline_400_SIGNINGBASKET'
         '401':
-          $ref: '#/components/responses/decline_401_AIS'
+          $ref: '#/components/responses/decline_401_SIGNINGBASKET'
         '403':
-          $ref: '#/components/responses/decline_403_AIS'
+          $ref: '#/components/responses/decline_403_SIGNINGBASKET'
         '404':
-          $ref: '#/components/responses/decline_404_AIS'
+          $ref: '#/components/responses/decline_404_SIGNINGBASKET'
         '405':
-          $ref: '#/components/responses/decline_405_AIS'
+          $ref: '#/components/responses/decline_405_SIGNINGBASKET'
         '406':
           $ref: '#/components/responses/decline_406'
         '408':
           $ref: '#/components/responses/decline_408'
         '409':
-          $ref: '#/components/responses/decline_409_AIS'
+          $ref: '#/components/responses/decline_409_SIGNINGBASKET'
         '415':
           $ref: '#/components/responses/decline_415'
         '500':
           $ref: '#/components/responses/decline_500'
         '503':
           $ref: '#/components/responses/decline_503'
-  /v2/consents/document-services/{consentId}:
+  /v2/signing-baskets/{basketId}:
     get:
-      summary: Get Consent Request on Document Services
+      summary: Get Signing Basket Request
       description: | 
-        Reads the content of a consent object regarding document services.
-      operationId: getConsentOnDocumentServices
+        Reads the content of a signing basket object.
+      operationId: getSigningBasket
       tags:
-        - Consent API
+        - Signing Basket API
       security:
         - {}
         - BearerAuthOAuth: []
       parameters:
-        - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/PATH_basketId'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
       responses:
         '200':
-          $ref: '#/components/responses/OK_200_CONSENT_PIIS'
+          $ref: '#/components/responses/OK_200_GET_SIGNINGBASKET'
         '400':
-          $ref: '#/components/responses/decline_400_AIS'
+          $ref: '#/components/responses/decline_400_SIGNINGBASKET'
         '401':
-          $ref: '#/components/responses/decline_401_AIS'
+          $ref: '#/components/responses/decline_401_SIGNINGBASKET'
         '403':
-          $ref: '#/components/responses/decline_403_AIS'
+          $ref: '#/components/responses/decline_403_SIGNINGBASKET'
         '404':
-          $ref: '#/components/responses/decline_404_AIS'
+          $ref: '#/components/responses/decline_404_SIGNINGBASKET'
         '405':
-          $ref: '#/components/responses/decline_405_AIS'
+          $ref: '#/components/responses/decline_405_SIGNINGBASKET'
         '406':
           $ref: '#/components/responses/decline_406'
         '408':
           $ref: '#/components/responses/decline_408'
         '409':
-          $ref: '#/components/responses/decline_409_AIS'
+          $ref: '#/components/responses/decline_409_SIGNINGBASKET'
         '415':
           $ref: '#/components/responses/decline_415'
         '500':
           $ref: '#/components/responses/decline_500'
         '503':
           $ref: '#/components/responses/decline_503'
-  /v2/consents/{consent-category}/{consentId}/status:
-    get:
-      summary: Get Consent Status
-      description: | 
-        Reads the status of an addressed consent resource.
-      operationId: getConsentStatus
-      tags:
-        - Consent API
-      security:
-        - {}
-        - BearerAuthOAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PATH_consentCategory'
-        - $ref: '#/components/parameters/PATH_consentId'
-        - $ref: '#/components/parameters/HEADER_digest'
-        - $ref: '#/components/parameters/HEADER_xJwsSignature'
-        - $ref: '#/components/parameters/HEADER_xRequestId'
-      responses:
-        '200':
-          $ref: '#/components/responses/OK_200_CONSENTSTATUS'
-        '400':
-          $ref: '#/components/responses/decline_400_AIS'
-        '401':
-          $ref: '#/components/responses/decline_401_AIS'
-        '403':
-          $ref: '#/components/responses/decline_403_AIS'
-        '404':
-          $ref: '#/components/responses/decline_404_AIS'
-        '405':
-          $ref: '#/components/responses/decline_405_AIS'
-        '406':
-          $ref: '#/components/responses/decline_406'
-        '408':
-          $ref: '#/components/responses/decline_408'
-        '409':
-          $ref: '#/components/responses/decline_409_AIS'
-        '415':
-          $ref: '#/components/responses/decline_415'
-        '500':
-          $ref: '#/components/responses/decline_500'
-        '503':
-          $ref: '#/components/responses/decline_503'
-  /v2/consents/{consent-category}/{consentId}:
     delete:
-      summary: Cancellation of a Consent
+      summary: Delete Signing Basket Request
       description: | 
-        Terminates a given consent.
-      operationId: deleteConsent
+        Deletes a created signing basket if it is not yet (partially) authorised.
+      operationId: deleteSigningBasket
       tags:
-        - Consent API
+        - Signing Basket API
       security:
         - {}
         - BearerAuthOAuth: []
       parameters:
-        - $ref: '#/components/parameters/PATH_consentCategory'
-        - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/PATH_basketId'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
       responses:
         '204':
-          $ref: '#/components/responses/OK_204_CONSENT_DELETE'
+          $ref: '#/components/responses/OK_204_DELETE_SIGNINGBASKET'
         '400':
-          $ref: '#/components/responses/decline_400_AIS'
+          $ref: '#/components/responses/decline_400_SIGNINGBASKET'
         '401':
-          $ref: '#/components/responses/decline_401_AIS'
+          $ref: '#/components/responses/decline_401_SIGNINGBASKET'
         '403':
-          $ref: '#/components/responses/decline_403_AIS'
+          $ref: '#/components/responses/decline_403_SIGNINGBASKET'
         '404':
-          $ref: '#/components/responses/decline_404_AIS'
+          $ref: '#/components/responses/decline_404_SIGNINGBASKET'
         '405':
-          $ref: '#/components/responses/decline_405_AIS'
+          $ref: '#/components/responses/decline_405_SIGNINGBASKET'
         '406':
           $ref: '#/components/responses/decline_406'
         '408':
           $ref: '#/components/responses/decline_408'
         '409':
-          $ref: '#/components/responses/decline_409_AIS'
+          $ref: '#/components/responses/decline_409_SIGNINGBASKET'
+        '415':
+          $ref: '#/components/responses/decline_415'
+        '500':
+          $ref: '#/components/responses/decline_500'
+        '503':
+          $ref: '#/components/responses/decline_503'
+  /v2/signing-baskets/{basketId}/status:
+    get:
+      summary: Get Signing Basket Status Request
+      description: | 
+        Reads the status of a signing basket object.
+      operationId: getSigningBasketStatus
+      tags:
+        - Signing Basket API
+      security:
+        - {}
+        - BearerAuthOAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PATH_basketId'
+        - $ref: '#/components/parameters/HEADER_digest'
+        - $ref: '#/components/parameters/HEADER_xJwsSignature'
+        - $ref: '#/components/parameters/HEADER_xRequestId'
+      responses:
+        '200':
+          $ref: '#/components/responses/OK_200_GETSTATUS_SIGNINGBASKET'
+        '400':
+          $ref: '#/components/responses/decline_400_SIGNINGBASKET'
+        '401':
+          $ref: '#/components/responses/decline_401_SIGNINGBASKET'
+        '403':
+          $ref: '#/components/responses/decline_403_SIGNINGBASKET'
+        '404':
+          $ref: '#/components/responses/decline_404_SIGNINGBASKET'
+        '405':
+          $ref: '#/components/responses/decline_405_SIGNINGBASKET'
+        '406':
+          $ref: '#/components/responses/decline_406'
+        '408':
+          $ref: '#/components/responses/decline_408'
+        '409':
+          $ref: '#/components/responses/decline_409_SIGNINGBASKET'
         '415':
           $ref: '#/components/responses/decline_415'
         '500':
@@ -1031,25 +559,15 @@ components:
       type: http
       scheme: bearer
   schemas:
-    additionalRequestInformation1:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Additional Request Information1\" for more details.
-      type: object
-      properties:
-        originatorPspId:
-          description: |
-            Originator payment service provider in case of indirect participation regarding a related API Access Scheme or bilateral contract
-          allOf:
-            - $ref: '#/components/schemas/financialInstitutionIdentification'
+    MessageCode_409_SigningBasket: 
+      description: Message codes defined for signing baskets for HTTP Error code 409 (CONFLICT).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_409'
+        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_409'
     Max2048Text:
       type: string
       maxLength: 2048
       example: 'Text, maximum of 2048 characters.'
-    MessageCode_405_AIS: 
-      description: |
-        Message codes defined for AIS for HTTP Error code 405 (METHOD NOT ALLOWED).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_405'
     OrganisationIdentificationCode:
       description: |
       type: string
@@ -1085,84 +603,11 @@ components:
             $ref: '#/components/schemas/clientMessageInformation_405_AUTHORISATION'
         _links:
           $ref: '#/components/schemas/links'
-    AccessRightsCodes:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Access Rights Codes\" for more details.
-      type: string
-      enum: 
-        - ais
-        - accountDetails
-        - balances
-        - transactions
-        - orders
-        - ownerName
-        - owner
-        - psuName
-        - psuLeanIdentification
-        - trustedBeneficiaries
-        - initiatePayments
-        - fundsConfirmations
-        - userParameters
-        - ibanChecks
-        - corporateParameters
-        - accountCheckParameters
-      example: 'accountDetails'
-    error_RFC7807_403_AIS: 
-      description: |
-        Standardised definition of reporting error information according to [RFC7807].
-      type: object
-      required:
-        - type
-        - code
-      properties:
-        type: 
-          description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
-          type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
-        code:
-          $ref: '#/components/schemas/MessageCode_403_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
-          type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_403_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
+    MessageCode_404_SigningBasket: 
+      description: Message codes defined for signing baskets for HTTP Error code 404 (NOT FOUND).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_404'
+        - $ref: '#/components/schemas/MessageCode_PisSpecific_404'
     Max500Text:
       type: string
       maxLength: 500
@@ -1189,6 +634,33 @@ components:
           type: string
         text:
           $ref: '#/components/schemas/Max500Text'
+    _links_200_GET_SIGNINGBASKET: 
+      type: object
+      additionalProperties: 
+        $ref: '#/components/schemas/hrefType'
+      properties:
+        scaRedirect:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuIdentification:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuAuthentication:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithEncryptedPsuAuthentication:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithAuthenticationMethodSelection:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithTransactionAuthorisation:
+          $ref: '#/components/schemas/hrefType'
+        self:
+          $ref: '#/components/schemas/hrefType'
+        status:
+          $ref: '#/components/schemas/hrefType'
+        scaStatus:
+          $ref: '#/components/schemas/hrefType'
+        encryptionCertificates:
+          type: array
+          items: 
+            $ref: '#/components/schemas/hrefType'
     error_RFC7807_403_AUTHORISATION: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
@@ -1326,6 +798,62 @@ components:
           type: array
           items: 
             $ref: '#/components/schemas/hrefType'
+    error_RFC7807_403_SIGNINGBASKET: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_403_SigningBasket'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_403_SigningBasket'
+        _links:
+          $ref: '#/components/schemas/links'
     clientMessageInformation_404_AUTHORISATION:
       type: object
       required:
@@ -1342,10 +870,6 @@ components:
           type: string
         text:
           $ref: '#/components/schemas/Max500Text'
-    MessageCode_403_AIS: 
-      description: Message codes defined for AIS for HTTP Error code 403 (FORBIDDEN).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_403'
     hrefType:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"href Type\" for more details.
@@ -1356,6 +880,18 @@ components:
         href:
           description: |
           type: string
+    MessageCode_PushAisSpecific_400:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Push AIS Specific Error Codes\" for more details.
+      type: string
+      enum: 
+        - SUBSCRIPTION_INVALID
+        - SECONDARY_URI_NOT_SUPPORTED
+        - MIME_TYPE_NOT_SUPPORTED
+        - LIMIT_FOR_BALANCE_NOT_SUPPORTED
+        - ACCOUNT_CURRENCY_NOT_MATCHING
+        - BALANCE_TYPE_NOT_SUPPORTED
+      example: 'SUBSCRIPTION_INVALID'
     originalTransactionReference:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Original Transaction Reference\" for more details.
@@ -1381,18 +917,6 @@ components:
           description: |
           allOf:
             - $ref: '#/components/schemas/partyDescription'
-    MessageCode_PushAisSpecific_400:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Push AIS Specific Error Codes\" for more details.
-      type: string
-      enum: 
-        - SUBSCRIPTION_INVALID
-        - SECONDARY_URI_NOT_SUPPORTED
-        - MIME_TYPE_NOT_SUPPORTED
-        - LIMIT_FOR_BALANCE_NOT_SUPPORTED
-        - ACCOUNT_CURRENCY_NOT_MATCHING
-        - BALANCE_TYPE_NOT_SUPPORTED
-      example: 'SUBSCRIPTION_INVALID'
     financialInstitutionIdentification:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Financial Institution Identification\" for more details.
@@ -1426,6 +950,23 @@ components:
       type: string
       maxLength: 35
       example: 'Text, maximum of 35 characters.'
+    PartyNameMatchCode:
+      description: |
+        See document \"openFinance API Framework Extended Services Verification of Party (VOP) \", 
+        section \"Party Name Match Code\" for more details.
+        Code    Desription
+         MTCH     Match
+         NMTC     No match
+         MBAM     The provided creditor name closely resembles the account holder name
+         NOAP     Validation check is not applicable
+         NOTC     Validation check has not been carried out.
+      type: string
+      enum:
+        - MTCH
+        - NMTC
+        - CMTC
+        - NOAP
+      example: 'MBAM'
     accountReference:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Account Reference\" for more details.
@@ -1492,23 +1033,62 @@ components:
           description: |
           allOf:
             - $ref: '#/components/schemas/financialInstitutionIdentification'
-    PartyNameMatchCode:
+    error_RFC7807_401_SIGNINGBASKET: 
       description: |
-        See document \"openFinance API Framework Extended Services Verification of Party (VOP) \", 
-        section \"Party Name Match Code\" for more details.
-        Code    Desription
-         MTCH     Match
-         NMTC     No match
-         MBAM     The provided creditor name closely resembles the account holder name
-         NOAP     Validation check is not applicable
-         NOTC     Validation check has not been carried out.
-      type: string
-      enum:
-        - MTCH
-        - NMTC
-        - CMTC
-        - NOAP
-      example: 'MBAM'
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_401_SigningBasket'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_401_SigningBasket'
+        _links:
+          $ref: '#/components/schemas/links'
     IBAN:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
@@ -1567,60 +1147,13 @@ components:
             Explanations e.g. to specify index = \"other\".
           allOf:
             - $ref: '#/components/schemas/Max500Text'
-    error_RFC7807_401_AIS: 
-      description: |
-        Standardised definition of reporting error information according to [RFC7807].
+    error_NG_403_SIGNINGBASKET: 
       type: object
-      required:
-        - type
-        - code
       properties:
-        type: 
-          description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
-          type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
-        code:
-          $ref: '#/components/schemas/MessageCode_401_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
+        apiClientMessages:
           type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_401_AIS'
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_403_SIGNINGBASKET'
         _links:
           $ref: '#/components/schemas/links'
     CashAccountType:
@@ -1652,22 +1185,6 @@ components:
         - VACC
         - NFCA
       example: 'CACC'
-    clientMessageInformation_404_AIS:
-      type: object
-      required:
-        - category
-        - code
-      properties:
-        category:
-          description: |
-            Only \"ERROR\" or \"WARNING\" permitted
-          type: string
-        code:
-          $ref: '#/components/schemas/MessageCode_404_AIS'
-        path:
-          type: string
-        text:
-          $ref: '#/components/schemas/Max500Text'
     genericAccountIdentification:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Generic Account Identification\" for more details.
@@ -1722,6 +1239,12 @@ components:
             Issuer of the identification
           allOf:
             - $ref: '#/components/schemas/Max35Text'
+    messageCode_SigningBasketSpecific:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Signing Basket Specific Error Codes\" for more details.
+      oneOf:
+        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_400'
+        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_409'
     privateIdentification:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Private Identification\" for more details.
@@ -1750,12 +1273,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/personIdentification'
-    messageCode_SigningBasketSpecific:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Signing Basket Specific Error Codes\" for more details.
-      oneOf:
-        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_400'
-        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_409'
     GeoLocation:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Geo Location\" for more details.
@@ -1845,6 +1362,14 @@ components:
                 $ref: '#/components/schemas/MessageCode_ServiceUnspecific_401'
         _links:
           $ref: '#/components/schemas/links'
+    MessageCode_PisSpecific_400:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific HTTP Error Codes\" for more details.
+      type: string
+      enum: 
+        - PAYMENT_FAILED
+        - EXECUTION_DATE_INVALID
+      example: 'PAYMENT_FAILED'
     error_NG_403_AUTHORISATION: 
       type: object
       properties:
@@ -1854,14 +1379,13 @@ components:
             $ref: '#/components/schemas/clientMessageInformation_403_AUTHORISATION'
         _links:
           $ref: '#/components/schemas/links'
-    MessageCode_PisSpecific_400:
+    MessageCode_PisSpecific_401:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific HTTP Error Codes\" for more details.
       type: string
       enum: 
-        - PAYMENT_FAILED
-        - EXECUTION_DATE_INVALID
-      example: 'PAYMENT_FAILED'
+        - KID_MISSING
+      example: 'KID_MISSING'
     partyDescription2:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Party Description2\" for more details.
@@ -1877,13 +1401,22 @@ components:
             Postal Address of the party.
           allOf:
             - $ref: '#/components/schemas/postalAddress'
-    MessageCode_PisSpecific_401:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific HTTP Error Codes\" for more details.
-      type: string
-      enum: 
-        - KID_MISSING
-      example: 'KID_MISSING'
+    clientMessageInformation_400_SIGNINGBASKET:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_400_SigningBasket'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
     Max256Text:
       type: string
       maxLength: 256
@@ -1909,31 +1442,118 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/genericOrganisationIdentification'
-    error_NG_405_AIS: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_405_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    clientMessageInformation_403_AIS:
+    error_RFC7807_400_SIGNINGBASKET: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
       type: object
       required:
-        - category
+        - type
         - code
       properties:
-        category:
+        type: 
           description: |
-            Only \"ERROR\" or \"WARNING\" permitted
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
           type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
         code:
-          $ref: '#/components/schemas/MessageCode_403_AIS'
-        path:
+          $ref: '#/components/schemas/MessageCode_400_SigningBasket'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_400_SigningBasket'
+        _links:
+          $ref: '#/components/schemas/links'
+    error_RFC7807_409_SIGNINGBASKET: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
           type: string
-        text:
-          $ref: '#/components/schemas/Max500Text'
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_409_SigningBasket'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_409_SigningBasket'
+        _links:
+          $ref: '#/components/schemas/links'
     MessageCode_PisSpecific_403:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific HTTP Error Codes\" for more details.
@@ -1941,22 +1561,6 @@ components:
       enum: 
         - PRODUCT_INVALID
       example: 'PRODUCT_INVALID'
-    creditorDetailsAndAccount:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Creditor Details and Account\" for more details.
-      type: object
-      required:
-        - creditor
-        - creditorAccount
-      properties:
-        creditor:
-          description: |
-          allOf:
-            - $ref: '#/components/schemas/partyDescription'
-        creditorAccount:
-          description: |
-          allOf:
-            - $ref: '#/components/schemas/accountReference'
     MessageCode_PisSpecific_404:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific HTTP Error Codes\" for more details.
@@ -1971,29 +1575,22 @@ components:
       enum: 
         - CANCELLATION_INVALID
       example: 'CANCELLATION_INVALID'
-    error_NG_403_AIS: 
+    clientMessageInformation_409_SIGNINGBASKET:
       type: object
+      required:
+        - category
+        - code
       properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_403_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    ConsentStatus:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Consent Status\" for more details.
-      type: string
-      enum:
-        - received
-        - rejected
-        - partiallyAuthorised
-        - valid
-        - revokedByPsu
-        - expired
-        - terminatedByTpp
-        - replacedByTpp
-      example: 'received'
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_409_SigningBasket'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
     NamePrefixCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Name Prefix Code\" for more details.
@@ -2097,27 +1694,6 @@ components:
       type: string
       maxLength: 140
       example: 'Text, maximum of 140 characters.'
-    Max512Text:
-      type: string
-      maxLength: 512
-      example: 'Text, maximum of 512 characters.'
-    accountAccessRights:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Account Access Rights\" for more details.
-      type: object
-      required:
-        - rights
-      properties:
-        account:
-          description: |
-            Is mandated if the consentType equals \"detailed\", not supported otherwise.allOf:
-          allOf:
-            - $ref: '#/components/schemas/accountReference'
-        rights:
-          description: |
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessRightsCodes'
     PersonIdentificationCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
@@ -2134,6 +1710,33 @@ components:
         - TXID
         - POID
       example: 'NIDN'
+    _links_201_SIGNINGBASKET: 
+      type: object
+      additionalProperties: 
+        $ref: '#/components/schemas/hrefType'
+      properties:
+        scaRedirect:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuIdentification:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithPsuAuthentication:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithEncryptedPsuAuthentication:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithAuthenticationMethodSelection:
+          $ref: '#/components/schemas/hrefType'
+        startAuthorisationWithTransactionAuthorisation:
+          $ref: '#/components/schemas/hrefType'
+        self:
+          $ref: '#/components/schemas/hrefType'
+        status:
+          $ref: '#/components/schemas/hrefType'
+        scaStatus:
+          $ref: '#/components/schemas/hrefType'
+        encryptionCertificates:
+          type: array
+          items: 
+            $ref: '#/components/schemas/hrefType'
     _links_200_GET_AUTHORISATION_STATUS: 
       type: object
       additionalProperties: 
@@ -2141,6 +1744,20 @@ components:
       properties:
         scaStatus:
           $ref: '#/components/schemas/hrefType'
+    error_NG_405_SIGNINGBASKET: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_405_SIGNINGBASKET'
+        _links:
+          $ref: '#/components/schemas/links'
+    MessageCode_405_SigningBasket:
+      description: |
+        Message codes defined for signing baskets for HTTP Error code 405 (METHOD NOT ALLOWED).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_405'
     ProxyAccountTypeCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
@@ -2258,22 +1875,6 @@ components:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
       type: string
-    clientMessageInformation_401_AIS:
-      type: object
-      required:
-        - category
-        - code
-      properties:
-        category:
-          description: |
-            Only \"ERROR\" or \"WARNING\" permitted
-          type: string
-        code:
-          $ref: '#/components/schemas/MessageCode_401_AIS'
-        path:
-          type: string
-        text:
-          $ref: '#/components/schemas/Max500Text'
     error_RFC7807_409_AUTHORISATION: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
@@ -2330,11 +1931,6 @@ components:
                 $ref: '#/components/schemas/MessageCode_ServiceUnspecific_409'
         _links:
           $ref: '#/components/schemas/links'
-    MessageCode_401_AIS: 
-      description: Message codes defined for AIS for HTTP Error code 401 (UNAUTHORIZED).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_401'
-        - $ref: '#/components/schemas/MessageCode_AisSpecific_401'
     MessageCode_ServiceUnspecific_405:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
@@ -2342,12 +1938,6 @@ components:
       enum: 
         - SERVICE_INVALID
       example: 'SERVICE_INVALID'
-    ISODate:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
-      type: string
-      format: date
-      example: '2020-01-01'
     MessageCode_ServiceUnspecific_404:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
@@ -2355,12 +1945,12 @@ components:
       enum: 
         - RESOURCE_UNKNOWN
       example: 'RESOURCE_UNKNOWN'
-    BBAN:
+    ISODate:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
       type: string
-      pattern: '[a-zA-Z0-9]{1,30}' 
-      example: 'BARC12345612345678'
+      format: date
+      example: '2020-01-01'
     MessageCode_ServiceUnspecific_403:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
@@ -2371,13 +1961,18 @@ components:
         - RESOURCE_UNKNOWN
         - RESOURCE_EXPIRED
       example: 'SERVICE_BLOCKED'
+    BBAN:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[a-zA-Z0-9]{1,30}' 
+      example: 'BARC12345612345678'
     MessageCode_ServiceUnspecific_401:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Service Unspecific HTTP Error Codes\" for more details.
       type: string
       enum: 
         - CERTIFICATE_INVALID
-        - ROLE_INVALID
         - CERTIFICATE_EXPIRED
         - CERTIFICATE_BLOCKED
         - CERTIFICATE_REVOKED
@@ -2414,67 +2009,6 @@ components:
         - SCA_METHOD_UNKNOWN
         - SCA_INVALID
       example: 'FORMAT_ERROR'
-    error_NG_401_AIS: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_401_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    accountAccess:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Account Access\" for more details.
-      type: object
-      properties:
-        payments:
-          description: |
-            Addressing required access rights to current accounts.
-            The array may not be empty.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
-        cards:
-          description: |
-            Addressing required access rights to accounts.
-            The array may not be empty.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
-        cardAccounts:
-          description: |
-            Addressing required access rights to card reconciliation accounts.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
-        savings:
-          description: |
-            Addressing required access rights to loan accounts.
-            The array may not be empty.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
-        loans:
-          description: |
-            Addressing required access rights to saving accounts.
-            The array may not be empty.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
-        securities:
-          description: |
-            Addressing required access rights to security accounts.
-            The array may not be empty.
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/accountAccessRights'
     messageCode:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Message Code\" for more details.
@@ -2558,6 +2092,24 @@ components:
         - CARD_INVALID
         - NO_PIIS_ACTIVATION
       example: 'CARD_INVALID'
+    error_NG_404_SIGNINGBASKET: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_404_SIGNINGBASKET'
+        _links:
+          $ref: '#/components/schemas/links'
+    error_NG_409_SIGNINGBASKET: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_409_SIGNINGBASKET'
+        _links:
+          $ref: '#/components/schemas/links'
     SCAStatus:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"SCA Status\" for more details.
@@ -2584,20 +2136,6 @@ components:
         - FAXX
         - CELL
       example: 'MAIL'
-    error_NG_400_AIS: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_400_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    MessageCode_404_AIS: 
-      description: Message codes defined for AIS for HTTP Error code 404 (NOT FOUND).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_404'
-        - $ref: '#/components/schemas/MessageCode_AisSpecific_404'
     TransactionStatus:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Transaction Status\" for more details.
@@ -2622,15 +2160,6 @@ components:
         - RVNC
         - RCVC
       example: 'ACCC'
-    error_NG_409_AIS: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_409_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
     messageCode_PisSpecific:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"PIS Specific Error Codes\" for more details.
@@ -2640,39 +2169,6 @@ components:
         - $ref: '#/components/schemas/MessageCode_PisSpecific_403'
         - $ref: '#/components/schemas/MessageCode_PisSpecific_404'
         - $ref: '#/components/schemas/MessageCode_PisSpecific_405'
-    _links_201_CONSENT_OTHER: 
-      type: object
-      additionalProperties: 
-        $ref: '#/components/schemas/hrefType'
-      properties:
-        scaRedirect:
-          $ref: '#/components/schemas/hrefType'
-        scaOAuth:
-          $ref: '#/components/schemas/hrefType'
-        confirmation:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisation:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithPsuIdentification:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithPsuAuthentication:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithEncryptedPsuAuthentication:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithAuthenticationMethodSelection:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithTransactionAuthorisation:
-          $ref: '#/components/schemas/hrefType'
-        self:
-          $ref: '#/components/schemas/hrefType'
-        status:
-          $ref: '#/components/schemas/hrefType'
-        scaStatus:
-          $ref: '#/components/schemas/hrefType'
-        encryptionCertificates:
-          type: array
-          items: 
-            $ref: '#/components/schemas/hrefType'
     Max70Text:
       type: string
       maxLength: 70
@@ -3031,6 +2527,12 @@ components:
             might only be used to display related information to the PSU during potential authorisation processes.
           allOf:
             - $ref: '#/components/schemas/additionalPartyInformation'
+    UUID:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      format: uuid
+      example: '99435c7e-ad88-49ec-a2ad-99ddcb1f5555'
     genericFinancialInstitutionIdentification:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Generic Financial Institution Identification\" for more details.
@@ -3058,78 +2560,6 @@ components:
             Issuer of the identification
           allOf:
             - $ref: '#/components/schemas/Max35Text'
-    UUID:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
-      type: string
-      format: uuid
-      example: '99435c7e-ad88-49ec-a2ad-99ddcb1f5555'
-    error_RFC7807_404_AIS: 
-      description: |
-        Standardised definition of reporting error information according to [RFC7807].
-      type: object
-      required:
-        - type
-        - code
-      properties:
-        type: 
-          description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
-          type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
-        code:
-          $ref: '#/components/schemas/MessageCode_404_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
-          type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_404_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    ConsentTypeCode:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Consent Type Code\" for more details.
-      type: string
-      enum:
-        - global
-        - detailed
-        - aspspManaged
-        - accountList
-      example: 'detailed'
     AuthenticationType:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Authentication Type\" for more details.
@@ -3141,63 +2571,11 @@ components:
         - PUSH_OTP
         - SMTP_OTP
       example: 'PUSH_OTP'
-    error_RFC7807_400_AIS: 
-      description: |
-        Standardised definition of reporting error information according to [RFC7807].
-      type: object
-      required:
-        - type
-        - code
-      properties:
-        type: 
-          description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
-          type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
-        code:
-          $ref: '#/components/schemas/MessageCode_400_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
-          type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_400_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    clientMessageInformation_405_AIS:
+    MessageCode_403_SigningBasket: 
+      description: Message codes defined for signing baskets for HTTP Error code 403 (FORBIDDEN).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_403'
+    clientMessageInformation_401_SIGNINGBASKET:
       type: object
       required:
         - category
@@ -3208,7 +2586,7 @@ components:
             Only \"ERROR\" or \"WARNING\" permitted
           type: string
         code:
-          $ref: '#/components/schemas/MessageCode_405_AIS'
+          $ref: '#/components/schemas/MessageCode_401_SigningBasket'
         path:
           type: string
         text:
@@ -3527,39 +2905,6 @@ components:
         - NMTC
         - NOAP
       example: 'MTCH'
-    _links_201_CONSENT_ACCOUNT: 
-      type: object
-      additionalProperties: 
-        $ref: '#/components/schemas/hrefType'
-      properties:
-        scaRedirect:
-          $ref: '#/components/schemas/hrefType'
-        scaOAuth:
-          $ref: '#/components/schemas/hrefType'
-        confirmation:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisation:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithPsuIdentification:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithPsuAuthentication:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithEncryptedPsuAuthentication:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithAuthenticationMethodSelection:
-          $ref: '#/components/schemas/hrefType'
-        startAuthorisationWithTransactionAuthorisation:
-          $ref: '#/components/schemas/hrefType'
-        self:
-          $ref: '#/components/schemas/hrefType'
-        status:
-          $ref: '#/components/schemas/hrefType'
-        scaStatus:
-          $ref: '#/components/schemas/hrefType'
-        encryptionCertificates:
-          type: array
-          items: 
-            $ref: '#/components/schemas/hrefType'
     messageCode_PiisSpecific:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"PIIS Specific Error Codes\" for more details.
@@ -3611,67 +2956,22 @@ components:
             Identification code for a clearing system, that has not yet been identified in the list of clearing systems.
           allOf:
             - $ref: '#/components/schemas/Max35Text'
-    error_RFC7807_409: 
-      description: |
-        Standardised definition of reporting error information according to [RFC7807].
+    clientMessageInformation_405_SIGNINGBASKET:
       type: object
       required:
-        - type
+        - category
         - code
       properties:
-        type: 
+        category:
           description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
+            Only \"ERROR\" or \"WARNING\" permitted
           type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
         code:
-          $ref: '#/components/schemas/MessageCode_409_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
-          type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_409_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
-    MessageCode_409_AIS: 
-      description: |
-        Message codes defined for AIS for HTTP Error code 409 (CONFLICT).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_409'
+          $ref: '#/components/schemas/MessageCode_405_SigningBasket'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
     additionalPartyInformation:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Additional Party Information\" for more details.
@@ -3702,11 +3002,6 @@ components:
       oneOf:
         - $ref: '#/components/schemas/MessageCode_PushAisSpecific_400'
         - $ref: '#/components/schemas/MessageCode_PushAisSpecific_409'
-    MessageCode_400_AIS: 
-      description: Message codes defined for AIS for HTTP Error code 400 (BAD_REQUEST).
-      anyOf:
-        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_400'
-        - $ref: '#/components/schemas/MessageCode_AisSpecific_400'
     authenticationObject:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Authentication Object\" for more details.
@@ -3741,7 +3036,11 @@ components:
           description: |
             detailed information about the SCA method for the PSU
           type: string
-    error_RFC7807_409_AIS: 
+    MessageCode_401_SigningBasket: 
+      description: Message codes defined for signing baskets for HTTP Error code 401 (UNAUTHORIZED).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_401'
+    error_RFC7807_405_SIGNINGBASKET: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
       type: object
@@ -3777,7 +3076,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Max256Text'
         code:
-          $ref: '#/components/schemas/MessageCode_409_AIS'
+          $ref: '#/components/schemas/MessageCode_405_SigningBasket'
         additionalErrors:
           description: |
             Array of Error Information Blocks.
@@ -3794,7 +3093,7 @@ components:
               detail:
                 $ref: '#/components/schemas/Max500Text'
               code:
-                $ref: '#/components/schemas/MessageCode_409_AIS'
+                $ref: '#/components/schemas/MessageCode_405_SigningBasket'
         _links:
           $ref: '#/components/schemas/links'
     interest:
@@ -3848,7 +3147,7 @@ components:
             An explanation of a mandated change mechanism.
           allOf:
             - $ref: '#/components/schemas/Max1024Text'
-    clientMessageInformation_409:
+    clientMessageInformation_404_SIGNINGBASKET:
       type: object
       required:
         - category
@@ -3859,34 +3158,20 @@ components:
             Only \"ERROR\" or \"WARNING\" permitted
           type: string
         code:
-          $ref: '#/components/schemas/MessageCode_409_AIS'
+          $ref: '#/components/schemas/MessageCode_404_SigningBasket'
         path:
           type: string
         text:
           $ref: '#/components/schemas/Max500Text'
-    DocumentTypeCode:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
-      type: string
-      enum:
-        - CINV
-        - CNFA
-        - CONT
-        - CREN
-        - DEBN
-        - DISP
-        - DNFA
-        - HIRI
-        - INVS
-        - MSIN
-        - PROF
-        - PUOR
-        - QUOT
-        - SBIN
-        - SPRR
-        - TISH
-        - USAR
-      example: 'CINV'
+    error_NG_401_SIGNINGBASKET: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_401_SIGNINGBASKET'
+        _links:
+          $ref: '#/components/schemas/links'
     error_RFC7807_405_AUTHORISATION: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
@@ -3949,25 +3234,10 @@ components:
       type: string
       maxLength: 4
       minLength: 4
-    error_NG_404_AIS: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_404_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
     Max1000Text:
       type: string
       maxLength: 1000
       example: 'Text, maximum of 1000 characters.'
-    CountryCode:
-      description: |
-        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
-      type: string
-      pattern: '[A-Z]{2}'
-      example: 'SE'
     clientMessageInformation:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Client Message Information\" for more details.
@@ -3993,62 +3263,12 @@ components:
             Additional explaining text.
           allOf:
             - $ref: '#/components/schemas/Max500Text'
-    error_RFC7807_405_AIS: 
+    CountryCode:
       description: |
-        Standardised definition of reporting error information according to [RFC7807].
-      type: object
-      required:
-        - type
-        - code
-      properties:
-        type: 
-          description: |
-            A URI reference [RFC3986] that identifies the problem type. 
-            Remark For Future: These URI will be provided by openFinance API Framework in future.
-          type: string
-          format: uri
-          maxLength: 70
-        title:
-          description: |
-            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
-          allOf:
-            - $ref: '#/components/schemas/Max70Text'
-        status:
-          description: |
-            HTTP response code generated by the server.
-            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
-          type: integer
-        detail:
-          description: |
-            Detailed human readable text specific to this instance of the error. 
-          allOf:
-            - $ref: '#/components/schemas/Max500Text'
-        instance:
-          description: |
-            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
-          allOf:
-            - $ref: '#/components/schemas/Max256Text'
-        code:
-          $ref: '#/components/schemas/MessageCode_405_AIS'
-        additionalErrors:
-          description: |
-            Array of Error Information Blocks.
-            Might be used if more than one error is to be communicated
-          type: array
-          items: #ErrorInformation
-            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
-            type: object
-            required:
-              - code
-            properties:
-              title:
-                $ref: '#/components/schemas/Max70Text'
-              detail:
-                $ref: '#/components/schemas/Max500Text'
-              code:
-                $ref: '#/components/schemas/MessageCode_405_AIS'
-        _links:
-          $ref: '#/components/schemas/links'
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[A-Z]{2}'
+      example: 'SE'
     error_NG_409_AUTHORISATION: 
       type: object
       properties:
@@ -4202,6 +3422,11 @@ components:
       type: string
       pattern: '[A-Z0-9]{18,18}[0-9]{2,2}'
       example: '549300DTUYXVMJXZNY75'
+    MessageCode_400_SigningBasket:
+      description: Message codes defined for signing baskets for HTTP Error code 400 (BAD_REQUEST).
+      anyOf:
+        - $ref: '#/components/schemas/MessageCode_ServiceUnspecific_400'
+        - $ref: '#/components/schemas/MessageCode_SigningBasketSpecific_400'
     MessageCode_AisSpecific_404:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
@@ -4265,6 +3490,22 @@ components:
                 $ref: '#/components/schemas/MessageCode_ServiceUnspecific_404'
         _links:
           $ref: '#/components/schemas/links'
+    clientMessageInformation_403_SIGNINGBASKET:
+      type: object
+      required:
+        - category
+        - code
+      properties:
+        category:
+          description: |
+            Only \"ERROR\" or \"WARNING\" permitted
+          type: string
+        code:
+          $ref: '#/components/schemas/MessageCode_403_SigningBasket'
+        path:
+          type: string
+        text:
+          $ref: '#/components/schemas/Max500Text'
     MessageCode_AisSpecific_406:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
@@ -4280,22 +3521,6 @@ components:
         - FIXD
         - INDE
       example: 'FIXD'
-    clientMessageInformation_409_AIS:
-      type: object
-      required:
-        - category
-        - code
-      properties:
-        category:
-          description: |
-            Only \"ERROR\" or \"WARNING\" permitted
-          type: string
-        code:
-          $ref: '#/components/schemas/MessageCode_409_AIS'
-        path:
-          type: string
-        text:
-          $ref: '#/components/schemas/Max500Text'
     accountDetails:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Account Details\" for more details.
@@ -4493,21 +3718,21 @@ components:
           description: |
             Additional explanation for the PSU to explain e.g. fallback mechanism for the chosen SCA method. The TPP is obliged to show this to the PSU.
           type: string
+    error_NG_400_SIGNINGBASKET: 
+      type: object
+      properties:
+        apiClientMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/clientMessageInformation_400_SIGNINGBASKET'
+        _links:
+          $ref: '#/components/schemas/links'
     ISODateTime:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
       type: string
       format: date-time
       example: '2020-01-01T13:00:00.999-01:00'
-    error_NG_409: 
-      type: object
-      properties:
-        apiClientMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/clientMessageInformation_409'
-        _links:
-          $ref: '#/components/schemas/links'
     partyIdentification:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"Party Identification\" for more details.
@@ -4523,6 +3748,62 @@ components:
             A scheme name defined in a proprietary way.
           allOf:
             - $ref: '#/components/schemas/privateIdentification'
+    error_RFC7807_404_SIGNINGBASKET: 
+      description: |
+        Standardised definition of reporting error information according to [RFC7807].
+      type: object
+      required:
+        - type
+        - code
+      properties:
+        type: 
+          description: |
+            A URI reference [RFC3986] that identifies the problem type. 
+            Remark For Future: These URI will be provided by openFinance API Framework in future.
+          type: string
+          format: uri
+          maxLength: 70
+        title:
+          description: |
+            Short human readable description of error type. Could be in local language. To be provided by ASPSPs.
+          allOf:
+            - $ref: '#/components/schemas/Max70Text'
+        status:
+          description: |
+            HTTP response code generated by the server.
+            If contained, this is more relevant as the actual http response code in the actual response, because it is introduced by the application server.            
+          type: integer
+        detail:
+          description: |
+            Detailed human readable text specific to this instance of the error. 
+          allOf:
+            - $ref: '#/components/schemas/Max500Text'
+        instance:
+          description: |
+            This attribute is containing a JSON pointer (as defined in [RFC6901]) or XPath expression to indicate the path to an issue generating the error in the related request.
+          allOf:
+            - $ref: '#/components/schemas/Max256Text'
+        code:
+          $ref: '#/components/schemas/MessageCode_404_SigningBasket'
+        additionalErrors:
+          description: |
+            Array of Error Information Blocks.
+            Might be used if more than one error is to be communicated
+          type: array
+          items: #ErrorInformation
+            description: This is a data element to support the declaration of additional errors in the context of [RFC7807]. 
+            type: object
+            required:
+              - code
+            properties:
+              title:
+                $ref: '#/components/schemas/Max70Text'
+              detail:
+                $ref: '#/components/schemas/Max500Text'
+              code:
+                $ref: '#/components/schemas/MessageCode_404_SigningBasket'
+        _links:
+          $ref: '#/components/schemas/links'
     MessageCode_AisSpecific_400:
       description: |
         See document \"openFinance API Framework Data Dictionary\", section \"AIS Specific HTTP Error Codes\" for more details.
@@ -4543,22 +3824,6 @@ components:
           type: string
         code:
           $ref: '#/components/schemas/MessageCode_ServiceUnspecific_403'
-        path:
-          type: string
-        text:
-          $ref: '#/components/schemas/Max500Text'
-    clientMessageInformation_400_AIS:
-      type: object
-      required:
-        - category
-        - code
-      properties:
-        category:
-          description: |
-            Only \"ERROR\" or \"WARNING\" permitted
-          type: string
-        code:
-          $ref: '#/components/schemas/MessageCode_400_AIS'
         path:
           type: string
         text:
@@ -4637,20 +3902,12 @@ components:
         type: string
       required: false
       example: 'status=SCA'
-    PATH_consentId:
-      name: consentId
-      in: path
-      description: |
-        ID of the corresponding consent object as returned by an account information consent request.
-      required: true
-      schema:
-        $ref: '#/components/schemas/Max70Text'
     HEADER_clientScaApproachPreference:
       name: Client-SCA-Approach-Preference
       in: header
       description: |
         A comma separated list of attributes, where the first entry will have a higher priority than the next or to every SCA Approach which is not indicated at all, e.g.
-        \"decoupled, redirect, embedded\"
+        \"decoupled, redirect, embedded, signature\"
         or 
         \"decoupled\"
         This attribute may be ignored by the ASPSP
@@ -4679,6 +3936,7 @@ components:
           - JAdES_JS
           - XAdES
           - EMV_AC
+          - EUDIW
       example: 'XAdES'
     HEADER_psuAcceptCharset:
       name: PSU-Accept-Charset
@@ -4818,6 +4076,16 @@ components:
       schema:
         type: string
       example: 'consents/account-access'
+    HEADER_consentId_optional:
+      name: Consent-ID
+      in: header
+      description: |
+        This data element may be contained, if the payment initiation transaction is part of a session, i.e. combined AIS/PIS service.
+        This then contains the consentId of the related AIS consent, which was performed prior to this payment initiation.
+      required: false
+      schema:
+        $ref: '#/components/schemas/Max70Text'
+      example: '123cons456'
     HEADER_psuCorporateId: 
       name: PSU-Corporate-ID
       in: header
@@ -4845,6 +4113,14 @@ components:
       schema:
         $ref: '#/components/schemas/Max70Text'
       example: '123auth456'
+    HEADER_contentType_mandatory:
+      name: Content-Type
+      in: header
+      description: |
+      required: true
+      schema:
+        type: string
+      example: 'application/json'
     HEADER_clientRedirectUri:
       name: Client-Redirect-URI
       in: header
@@ -4938,24 +4214,15 @@ components:
         type: string
       required: false # conditional
       example: 'eyJiNjQiOmZhbHNlLCJ4NXQjUzI1NiI6ImR5dFBwU2tKWXpoVGRQWFNXUDdqaFhnRzRrQ09XSVdHaWVzZHprdk5MelkiLCJjcml0IjpbInNpZ1QiLCJzaWdEIiwiYjY0Il0sInNpZ1QiOiIyMDIwLTEwLTI2VDExOjI2OjU3WiIsInNpZ0QiOnsicGFycyI6WyJ4LXJlcXVlc3QtaWQiLCJkaWdlc3QiXSwibUlkIjoiaHR0cDovL3VyaS5ldHNpLm9yZy8xOTE4Mi9IdHRwSGVhZGVycyJ9LCJhbGciOiJSUzI1NiJ9..NuGglWBtHcXavob2ZmW-PoSpMmhJS9U6z8zPqHFoE97vHI3z8wtaVdbwsj5WzgPjtVWUUnk8cxP4JjLXdwzwhhHB2uJ5FI4ZZGdSQQw-9pXPUx3cCJSzHmrgkJ-di-A4'
-    PATH_consentCategory:
-      name: consent-category
+    PATH_basketId:
+      name: basketId
       in: path
       description: |
-        The related consent type. Currently supported are the following consent types:
-        * account-access,
-        * funds-confirmations
-        * user-parameters-access
-        * rtps
+        This identification of the corresponding signing basket object.
       required: true
       schema:
-        type: string
-        enum: 
-          - account-access
-          - funds-confirmations
-          - user-parameters-access
-          - rtps
-      example: 'account-access'
+        $ref: '#/components/schemas/Max70Text'
+      example: '1234-basket-567'
   requestBodies: {}
   headers:
     ASPSP-Notification-Support:
@@ -4996,15 +4263,6 @@ components:
       schema:
         type: string
       example: 'Berlin Group openFinance API'
-    ASPSP-Multiple-Consent-Support:
-      description: |
-        true if the ASPSP supports the Multiple Consent Service.
-        false if the ASPSP does not support the Multiple Consent Service.
-        If not provided, this also implies that the ASPSP does not support the Multiple Consent Service.
-      schema:
-        type: boolean       
-      required: false
-      example: true
     ASPSP-SCA-Approach:
       description: |
         This data element must be contained, if the SCA Approach is already fixed.
@@ -5013,6 +4271,7 @@ components:
           * DECOUPLED
           * REDIRECT
           * ASPSP-CHANNEL
+          * SIGNATURE
         The OAuth SCA approach will be subsumed by REDIRECT.
       schema:
         type: string
@@ -5046,7 +4305,7 @@ components:
       required: false
       example: 'https://testbank.com/xs2a/v2/consents/account-access/123cons456'
   responses:
-    created_201_CONSENT_ACCOUNT:
+    decline_403_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -5054,77 +4313,21 @@ components:
           $ref: '#/components/headers/X-Reference-API-Document'
         X-Reference-API-Version:
           $ref: '#/components/headers/X-Reference-API-Version'
-        ASPSP-SCA-Approach:
-          $ref: '#/components/headers/ASPSP-SCA-Approach'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-        ASPSP-Notification-Content:
-          $ref: '#/components/headers/ASPSP-Notification-Content'
         Location:
           $ref: '#/components/headers/Location'
         X-Request-ID:
           $ref: '#/components/headers/X-Request-ID'
-        ASPSP-Multiple-Consent-Support:
-          $ref: '#/components/headers/ASPSP-Multiple-Consent-Support'
-      description: CREATED
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Forbidden
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - consentStatus
-              - consentId
-              - _links
-            properties:
-              consentStatus:
-                description: |
-                  authentication status of the consent
-                allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
-              consentId:
-                description: |
-                  Identification of the consent resource as it is used in the API structure
-                allOf:
-                  - $ref: '#/components/schemas/Max70Text'
-              scaMethods:
-                description: |
-                  This data element might be contained, if SCA is required and if the PSU has a choice between different
-                  authentication methods.
-                  Depending on the risk management of the ASPSP this choice might be offered before or after the PSU
-                  has been identified with the first relevant factor, or if an access token is transported.
-                  If this data element is contained, then there is also a hyperlink of type \"startAuthorisationWithAuthenticationMethodSelection\"
-                  contained in the response body.
-                  These methods shall be presented towards the PSU for selection by the TPP.
-                type: array
-                items:
-                  $ref: '#/components/schemas/authenticationObject'
-              chosenScaMethod:
-                description: |
-                  This data element is only contained in the response if the ASPSP has chosen the Embedded SCA Approach, if the PSU is already identified e.g. 
-                  with the first relevant factor or alternatively an access token, if SCA is required and if the authentication method is implicitly selected.
-                allOf:
-                  - $ref: '#/components/schemas/authenticationObject'
-              challengeData:
-                description: |
-                  It is contained in addition to the data element \"chosenScaMethod\" if challenge data is needed for SCA.
-                  In rare cases this attribute is also used in the context of the \"startAuthorisationWithPsuAuthentication\" or 
-                  \"startAuthorisactionWithEncryptedPsuAuthentication\" link. 
-                allOf:
-                  - $ref: '#/components/schemas/challenge'
-              _links:
-                description: |
-                  A list of hyperlinks to be recognised by the API Client. The actual hyperlinks used in the response depend on the dynamical decisions of the ASPSP 
-                  when processing the request. The potential links for this response message are generically defined in [oFA SMPF] for all Transaction Initiation 
-                  Response messages. These links will also be contained in the related Open API files. 
-                  Remark: All links can be relative or full links, to be decided by the ASPSP.
-                allOf:
-                  - $ref: '#/components/schemas/_links_201_CONSENT_ACCOUNT'
-              psuMessage:
-                description: |
-                  Text to be displayed to the PSU.
-                allOf:
-                  - $ref: '#/components/schemas/Max500Text'
-    OK_200_CONSENT_USERPARAMETERS:
+            $ref: '#/components/schemas/error_NG_403_SIGNINGBASKET'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_403_SIGNINGBASKET'
+    OK_200_GET_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -5137,35 +4340,57 @@ components:
       description: OK
       content:
         application/json:
-           schema:
+          schema:
             type: object
             required:
-              - access
-              - consentType
-              - recurringIndicator
-              - validTo
-              - consentStatus
+              - transactionStatus
             properties:
-              access:
+              paymentIds:
                 description: |
+                   A non-empty array of paymentIds.
+                type: array
+                minItems: 1
+                items: 
+                  $ref: '#/components/schemas/Max70Text'
+              consentIds:
+                description: |
+                   A non-empty array of consentIds.
+                type: array
+                minItems: 1
+                items: 
+                  $ref: '#/components/schemas/Max70Text'
+              subscriptionIds:
+                description: |
+                   A non-empty array of subscriptionIds.
+                type: array
+                minItems: 1
+                items: 
+                  $ref: '#/components/schemas/Max70Text'
+              subscriptionEntryIds:
+                description: |
+                   A non-empty array of subscriptionEntryIds.
+                type: array
+                minItems: 1
+                items: 
+                  $ref: '#/components/schemas/Max70Text'
+              mandateResourceIds:
+                description: |
+                   A non-empty array of mandateResourceIds.
+                type: array
+                minItems: 1
+                items: 
+                  $ref: '#/components/schemas/Max70Text'
+              transactionStatus:
+                description: |
+                  Only the not explicitly payment related codes like RCVD, PATC, ACTC, RJCT are used. For a list of all transactionStatus codes permitted for signing baskets, 
+                  cp. document \"openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures\".
                 allOf:
-                  - $ref: '#/components/schemas/accountAccess'
-              consentType:
+                  - $ref: '#/components/schemas/TransactionStatus'
+              _links:
                 description: |
+                  The ASPSP might integrate hyperlinks to indicate next (authorisation) steps to be taken.
                 allOf:
-                  - $ref: '#/components/schemas/ConsentTypeCode'
-              recurringIndicator:
-                description: |
-                type: boolean
-              validTo:
-                description: |
-                allOf:
-                  - $ref: '#/components/schemas/ISODate'
-              consentStatus:
-                description: |
-                  The status of the consent resource.
-                allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
+                  - $ref: '#/components/schemas/_links_200_GET_SIGNINGBASKET'
     decline_415_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -5410,6 +4635,28 @@ components:
         ASPSP-Notification-Support :
           $ref: '#/components/headers/ASPSP-Notification-Support'
       description: Service Unavailable
+    decline_405_SIGNINGBASKET:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Method not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_405_SIGNINGBASKET'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_405_SIGNINGBASKET'
     decline_500:
       headers:
         X-Reference-API-Name:
@@ -5464,74 +4711,6 @@ components:
         ASPSP-Notification-Support :
           $ref: '#/components/headers/ASPSP-Notification-Support'
       description: Request Timeout
-    OK_200_CONSENT_ACCOUNT:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-      description: OK
-      content:
-        application/json:
-           schema:
-            type: object
-            required:
-              - access
-              - consentType
-              - recurringIndicator
-              - validTo
-              - frequencyPerDay
-              - consentStatus
-            properties:
-              access:
-                description: |
-                allOf:
-                  - $ref: '#/components/schemas/accountAccess'
-              consentType:
-                description: |
-                allOf:
-                  - $ref: '#/components/schemas/ConsentTypeCode'
-              recurringIndicator:
-                description: |
-                type: boolean
-              validTo:
-                description: |
-                allOf:
-                  - $ref: '#/components/schemas/ISODate'
-              frequencyPerDay:
-                description: |
-                type: integer
-              consentStatus:
-                description: |
-                  The status of the consent resource.
-                allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
-    decline_401_AIS:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        Location:
-          $ref: '#/components/headers/Location'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Unauthorised
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error_NG_401_AIS'
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/error_RFC7807_401_AIS'
     decline_406:
       headers:
         X-Reference-API-Name:
@@ -5547,93 +4726,6 @@ components:
         ASPSP-Notification-Support :
           $ref: '#/components/headers/ASPSP-Notification-Support'
       description: Not Acceptable
-    created_201_CONSENT_OTHER:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        ASPSP-SCA-Approach:
-          $ref: '#/components/headers/ASPSP-SCA-Approach'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-        ASPSP-Notification-Content:
-          $ref: '#/components/headers/ASPSP-Notification-Content'
-        Location:
-          $ref: '#/components/headers/Location'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-      description: CREATED
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - consentStatus
-              - consentId
-              - _links
-            properties:
-              consentStatus:
-                description: |
-                  authentication status of the consent
-                allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
-              consentId:
-                description: |
-                  Identification of the consent resource as it is used in the API structure
-                allOf:
-                  - $ref: '#/components/schemas/Max70Text'
-              scaMethods:
-                description: |
-                  This data element might be contained, if SCA is required and if the PSU has a choice between different
-                  authentication methods.
-                  Depending on the risk management of the ASPSP this choice might be offered before or after the PSU
-                  has been identified with the first relevant factor, or if an access token is transported.
-                  If this data element is contained, then there is also a hyperlink of type \"startAuthorisationWithAuthenticationMethodSelection\"
-                  contained in the response body.
-                  These methods shall be presented towards the PSU for selection by the TPP.
-                type: array
-                items:
-                  $ref: '#/components/schemas/authenticationObject'
-              chosenScaMethod:
-                description: |
-                  This data element is only contained in the response if the ASPSP has chosen the Embedded SCA Approach, if the PSU is already identified e.g. 
-                  with the first relevant factor or alternatively an access token, if SCA is required and if the authentication method is implicitly selected.
-                allOf:
-                  - $ref: '#/components/schemas/authenticationObject'
-              challengeData:
-                description: |
-                  It is contained in addition to the data element \"chosenScaMethod\" if challenge data is needed for SCA.
-                  In rare cases this attribute is also used in the context of the \"startAuthorisationWithPsuAuthentication\" or 
-                  \"startAuthorisactionWithEncryptedPsuAuthentication\" link. 
-                allOf:
-                  - $ref: '#/components/schemas/challenge'
-              _links:
-                description: |
-                  A list of hyperlinks to be recognised by the API Client. The actual hyperlinks used in the response depend on the dynamical decisions of the ASPSP 
-                  when processing the request. The potential links for this response message are generically defined in [oFA SMPF] for all Transaction Initiation 
-                  Response messages. These links will also be contained in the related Open API files. 
-                  Remark: All links can be relative or full links, to be decided by the ASPSP.
-                allOf:
-                  - $ref: '#/components/schemas/_links_201_CONSENT_OTHER'
-              psuMessage:
-                description: |
-                  Text to be displayed to the PSU.
-                allOf:
-                  - $ref: '#/components/schemas/Max512Text'
-    OK_204_CONSENT_DELETE:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-      description: NO CONTENT
     decline_400_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -5678,7 +4770,7 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/error_RFC7807_404_AUTHORISATION'
-    decline_409:
+    created_201_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -5686,96 +4778,81 @@ components:
           $ref: '#/components/headers/X-Reference-API-Document'
         X-Reference-API-Version:
           $ref: '#/components/headers/X-Reference-API-Version'
+        ASPSP-SCA-Approach:
+          $ref: '#/components/headers/ASPSP-SCA-Approach'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+        ASPSP-Notification-Content:
+          $ref: '#/components/headers/ASPSP-Notification-Content'
         Location:
           $ref: '#/components/headers/Location'
         X-Request-ID:
           $ref: '#/components/headers/X-Request-ID'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Conflict
+      description: CREATED
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/error_NG_409'
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/error_RFC7807_409'
-    OK_200_CONSENT_PIIS:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-      description: OK
-      content:
-        application/json:
-           schema:
             type: object
             required:
-              - access
-              - consentType
-              - consentStatus
+              - transactionStatus
+              - basketId
+              - _links
             properties:
-              access:
+              transactionStatus:
                 description: |
-                  Account access details, where the confirmation of funds service is aimed to be submitted to.
+                  The non payment related values might be used like RCVD or ACTC. For a list of all transactionStatus codes permitted for signing baskets, 
+                  cp. document \"openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures\".
                 allOf:
-                  - $ref: '#/components/schemas/accountAccess'
-              consentType:
+                  - $ref: '#/components/schemas/TransactionStatus'
+              basketId:
                 description: |
+                  resource identification of the generated signing basket resource. 
                 allOf:
-                  - $ref: '#/components/schemas/ConsentTypeCode'
-              cardNumber:
+                  - $ref: '#/components/schemas/Max70Text'
+              scaMethods:
                 description: |
-                  Card Number of the card issued by the PIISP. Should be delivered if available.
-                allOf:
-                  - $ref: '#/components/schemas/Max35Text'
-              cardExpiryDate:
+                  This data element might be contained, if SCA is required and if the PSU has a choice between different
+                  authentication methods.
+                  Depending on the risk management of the ASPSP this choice might be offered before or after the PSU
+                  has been identified with the first relevant factor, or if an access token is transported.
+                  If this data element is contained, then there is also a hyperlink of type \"startAuthorisationWithAuthenticationMethodSelection\"
+                  contained in the response body.
+                  These methods shall be presented towards the PSU for selection by the TPP.
+                type: array
+                items:
+                  $ref: '#/components/schemas/authenticationObject'
+              chosenScaMethod:
                 description: |
-                  Expiry date of the card issued by the PIISP
+                  This data element is only contained in the response if the ASPSP has chosen the Embedded SCA Approach, if the PSU is already identified e.g. 
+                  with the first relevant factor or alternatively an access token, if SCA is required and if the authentication method is implicitly selected.
                 allOf:
-                  - $ref: '#/components/schemas/ISODate'
-              cardInformation:
+                  - $ref: '#/components/schemas/authenticationObject'
+              challengeData:
                 description: |
-                  Additional explanation for the card product.
+                  It is contained in addition to the data element \"chosenScaMethod\" if challenge data is needed for SCA.
+                  In rare cases this attribute is also used in the context of the \"startAuthorisationWithPsuAuthentication\" or 
+                  \"startAuthorisactionWithEncryptedPsuAuthentication\" link. 
                 allOf:
-                  - $ref: '#/components/schemas/Max140Text'
-              registrationInformation:
+                  - $ref: '#/components/schemas/challenge'
+              _links:
                 description: |
-                  Additional registration information.
+                  A list of hyperlinks to be recognised by the API Client. The actual hyperlinks used in the response depend on the dynamical decisions of the ASPSP 
+                  when processing the request. The potential links for this response message are generically defined in [oFA SMPF] for all Transaction Initiation 
+                  Response messages. These links will also be contained in the related Open API files. 
+                  Remark: All links can be relative or full links, to be decided by the ASPSP.
                 allOf:
-                  - $ref: '#/components/schemas/Max140Text'
-              consentStatus:
+                  - $ref: '#/components/schemas/_links_201_SIGNINGBASKET'
+              psuMessage:
                 description: |
-                  The status of the consent resource.
+                  Text to be displayed to the PSU.
                 allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
-    decline_409_AIS:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        Location:
-          $ref: '#/components/headers/Location'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error_NG_409_AIS'
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/error_RFC7807_409_AIS'
+                  - $ref: '#/components/schemas/Max500Text'
+              clientMessages:
+                description: |
+                  Messages to the TPP on operational issues.
+                type: array
+                items:
+                  $ref: '#/components/schemas/clientMessageInformation'
     decline_409_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -5901,7 +4978,7 @@ components:
                   Text to be displayed to the PSU.
                 allOf:
                   - $ref: '#/components/schemas/Max500Text'
-    decline_405_AIS:
+    decline_400_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -5915,14 +4992,60 @@ components:
           $ref: '#/components/headers/X-Request-ID'
         ASPSP-Notification-Support:
           $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Method not allowed
+      description: Bad Request
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/error_NG_405_AIS'
+            $ref: '#/components/schemas/error_NG_400_SIGNINGBASKET'
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/error_RFC7807_405_AIS'
+            $ref: '#/components/schemas/error_RFC7807_400_SIGNINGBASKET'
+    decline_409_SIGNINGBASKET:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        Location:
+          $ref: '#/components/headers/Location'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+        ASPSP-Notification-Support:
+          $ref: '#/components/headers/ASPSP-Notification-Support'
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error_NG_409_SIGNINGBASKET'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/error_RFC7807_409_SIGNINGBASKET'
+    OK_200_GETSTATUS_SIGNINGBASKET:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - transactionStatus
+            properties:
+              transactionStatus:
+                description: |
+                  Only the not explicitly payment related codes like RCVD, PATC, ACTC, RJCT are used. For a list of all transactionStatus codes permitted for signing baskets, 
+                  cp. document \"openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures\".
+                allOf:
+                  - $ref: '#/components/schemas/TransactionStatus'
     decline_408_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -5960,28 +5083,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/error_RFC7807_403_AUTHORISATION'
-    decline_400_AIS:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        Location:
-          $ref: '#/components/headers/Location'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-        ASPSP-Notification-Support:
-          $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error_NG_400_AIS'
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/error_RFC7807_400_AIS'
     decline_415:
       headers:
         X-Reference-API-Name:
@@ -5997,7 +5098,7 @@ components:
         ASPSP-Notification-Support :
           $ref: '#/components/headers/ASPSP-Notification-Support'
       description: Unsupported Media Type
-    decline_404_AIS:
+    decline_404_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -6015,10 +5116,10 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/error_NG_404_AIS'
+            $ref: '#/components/schemas/error_NG_404_SIGNINGBASKET'
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/error_RFC7807_404_AIS'
+            $ref: '#/components/schemas/error_RFC7807_404_SIGNINGBASKET'
     decline_406_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -6034,33 +5135,6 @@ components:
         ASPSP-Notification-Support :
           $ref: '#/components/headers/ASPSP-Notification-Support'
       description: Not Acceptable
-    OK_200_CONSENTSTATUS:
-      headers:
-        X-Reference-API-Name:
-          $ref: '#/components/headers/X-Reference-API-Name'
-        X-Reference-API-Document:
-          $ref: '#/components/headers/X-Reference-API-Document'
-        X-Reference-API-Version:
-          $ref: '#/components/headers/X-Reference-API-Version'
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-      description: OK
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - consentStatus
-            properties:
-              consentStatus:
-                description: |
-                  This is the overall lifecycle status of the consent. 
-                allOf:
-                  - $ref: '#/components/schemas/ConsentStatus'
-              psuMessage:
-                description: |
-                allOf:
-                  - $ref: '#/components/schemas/Max500Text'
     decline_405_AUTHORISATION:
       headers:
         X-Reference-API-Name:
@@ -6105,6 +5179,17 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/error_RFC7807_401_AUTHORISATION'
+    OK_204_DELETE_SIGNINGBASKET:
+      headers:
+        X-Reference-API-Name:
+          $ref: '#/components/headers/X-Reference-API-Name'
+        X-Reference-API-Document:
+          $ref: '#/components/headers/X-Reference-API-Document'
+        X-Reference-API-Version:
+          $ref: '#/components/headers/X-Reference-API-Version'
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
+      description: NO CONTENT
     created_200_GET_AUTHORISATION_STATUS:
       headers:
         X-Reference-API-Name:
@@ -6145,7 +5230,7 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/clientMessageInformation'
-    decline_403_AIS:
+    decline_401_SIGNINGBASKET:
       headers:
         X-Reference-API-Name:
           $ref: '#/components/headers/X-Reference-API-Name'
@@ -6159,13 +5244,13 @@ components:
           $ref: '#/components/headers/X-Request-ID'
         ASPSP-Notification-Support:
           $ref: '#/components/headers/ASPSP-Notification-Support'
-      description: Forbidden
+      description: Unauthorised
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/error_NG_403_AIS'
+            $ref: '#/components/schemas/error_NG_401_SIGNINGBASKET'
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/error_RFC7807_403_AIS'
+            $ref: '#/components/schemas/error_RFC7807_401_SIGNINGBASKET'
   examples: {}
 
