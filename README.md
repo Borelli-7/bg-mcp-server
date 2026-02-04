@@ -35,7 +35,7 @@ The server indexes the following Berlin Group specifications:
 - **Confirmation of Funds (PIIS)** v2.3
 - **Bank Account Status Services (BASK)** v2.2
 - **Consent Management** v2.1
-- **Data Dictionary** v2.2.6
+- **Data Dictionary** v2.3.1
 - **Payment Update Status Hub (PUSH)** v2.2
 
 ## Installation
@@ -52,7 +52,7 @@ The server indexes the following Berlin Group specifications:
 
 1. **Clone or navigate to the project directory:**
    ```bash
-   cd /home/kaly-7/Dev/Professional/ReposTests/Berlin-group-mcp
+   cd path-of-the-repo/Berlin-group-mcp
    ```
 
 2. **Install dependencies:**
@@ -78,7 +78,7 @@ The server indexes the following Berlin Group specifications:
        "berlin-group": {
          "command": "node",
          "args": [
-           "/home/kaly-7/Dev/Professional/ReposTests/Berlin-group-mcp/build/index.js"
+           "absolute-path-of-the-repo/Berlin-group-mcp/build/index.js"
          ]
        }
      }
