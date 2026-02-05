@@ -292,4 +292,69 @@ describe('createVectorStore', () => {
     });
     expect(store).toBeInstanceOf(VectorStore);
   });
+
+  it('should create a vector store with custom host and port', () => {
+    const store = createVectorStore({
+      chromaHost: 'custom-host',
+      chromaPort: 8888,
+    });
+    expect(store).toBeInstanceOf(VectorStore);
+  });
+
+  it('should create a vector store with custom embedding model', () => {
+    const store = createVectorStore({
+      embeddingModel: 'text-embedding-3-large',
+    });
+    expect(store).toBeInstanceOf(VectorStore);
+  });
+
+  it('should create a vector store with complete custom config', () => {
+    const store = createVectorStore({
+      chromaHost: 'localhost',
+      chromaPort: 8000,
+      collectionName: 'test_collection',
+      embeddingModel: 'text-embedding-3-small',
+    });
+    expect(store).toBeInstanceOf(VectorStore);
+  });
+
+  it('should respect environment variables when no config provided', () => {
+    const oldHost = process.env.CHROMA_HOST;
+    const oldPort = process.env.CHROMA_PORT;
+    
+    process.env.CHROMA_HOST = 'env-host';
+    process.env.CHROMA_PORT = '7777';
+    
+    const store = createVectorStore();
+    expect(store).toBeInstanceOf(VectorStore);
+    
+    // Restore environment
+    if (oldHost !== undefined) {
+      process.env.CHROMA_HOST = oldHost;
+    } else {
+      delete process.env.CHROMA_HOST;
+    }
+    if (oldPort !== undefined) {
+      process.env.CHROMA_PORT = oldPort;
+    } else {
+      delete process.env.CHROMA_PORT;
+    }
+  });
+
+  it('should override environment variables with explicit config', () => {
+    const oldHost = process.env.CHROMA_HOST;
+    process.env.CHROMA_HOST = 'env-host';
+    
+    const store = createVectorStore({
+      chromaHost: 'explicit-host',
+    });
+    expect(store).toBeInstanceOf(VectorStore);
+    
+    // Restore environment
+    if (oldHost !== undefined) {
+      process.env.CHROMA_HOST = oldHost;
+    } else {
+      delete process.env.CHROMA_HOST;
+    }
+  });
 });

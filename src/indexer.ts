@@ -1,12 +1,13 @@
 import { YamlParser, EndpointInfo, OpenAPISpec } from './yamlParser.js';
 import { PdfParser, PDFDocument } from './pdfParser.js';
-import { VectorStore, VectorSearchResult, createVectorStore } from './vectorStore.js';
+import { VectorStore, VectorSearchResult, createVectorStore, VectorStoreConfig } from './vectorStore.js';
 import { TextChunk } from './textChunker.js';
 import {
   GraphIndexer,
   createGraphIndexer,
   IndexingResult as GraphIndexingResult,
 } from './graphIndexer.js';
+import { GraphStoreConfig } from './graphStore.js';
 import {
   GraphStatistics,
   RelatedSchemaResult,
@@ -32,6 +33,11 @@ export interface SemanticSearchResult {
   pageEstimate?: number;
 }
 
+export interface IndexerConfig {
+  vectorStore?: Partial<VectorStoreConfig>;
+  graphStore?: Partial<GraphStoreConfig>;
+}
+
 export class SpecificationIndexer {
   private yamlParser: YamlParser;
   private pdfParser: PdfParser;
@@ -41,11 +47,11 @@ export class SpecificationIndexer {
   private vectorStoreEnabled: boolean = false;
   private graphStoreEnabled: boolean = false;
 
-  constructor() {
+  constructor(config?: IndexerConfig) {
     this.yamlParser = new YamlParser();
     this.pdfParser = new PdfParser();
-    this.vectorStore = createVectorStore();
-    this.graphIndexer = createGraphIndexer();
+    this.vectorStore = createVectorStore(config?.vectorStore);
+    this.graphIndexer = createGraphIndexer(config?.graphStore);
   }
 
   async initialize(yamlDir: string, pdfDir: string): Promise<void> {

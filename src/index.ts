@@ -15,8 +15,73 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize the indexer
-const indexer = new SpecificationIndexer();
+// ============================================================================
+// Configuration
+// ============================================================================
+
+interface ServerConfig {
+  chromaDB: {
+    host: string;
+    port: number;
+    collectionName: string;
+    embeddingModel?: string;
+  };
+  neo4j: {
+    uri: string;
+    username: string;
+    password: string;
+    database?: string;
+    maxConnectionPoolSize?: number;
+    connectionAcquisitionTimeout?: number;
+  };
+}
+
+/**
+ * Load configuration from environment variables
+ */
+function loadConfig(): ServerConfig {
+  return {
+    chromaDB: {
+      host: process.env.CHROMA_HOST || 'localhost',
+      port: parseInt(process.env.CHROMA_PORT || '8000', 10),
+      collectionName: process.env.CHROMA_COLLECTION || 'berlin_group_pdfs',
+      embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
+    },
+    neo4j: {
+      uri: process.env.NEO4J_URI || 'bolt://localhost:7687',
+      username: process.env.NEO4J_USERNAME || 'neo4j',
+      password: process.env.NEO4J_PASSWORD || 'password',
+      database: process.env.NEO4J_DATABASE || 'neo4j',
+      maxConnectionPoolSize: parseInt(process.env.NEO4J_MAX_POOL_SIZE || '50', 10),
+      connectionAcquisitionTimeout: parseInt(process.env.NEO4J_CONNECTION_TIMEOUT || '60000', 10),
+    },
+  };
+}
+
+// Load configuration
+const config = loadConfig();
+
+// Initialize the indexer with custom configurations
+const indexer = new SpecificationIndexer({
+  vectorStore: {
+    chromaHost: config.chromaDB.host,
+    chromaPort: config.chromaDB.port,
+    collectionName: config.chromaDB.collectionName,
+    embeddingModel: config.chromaDB.embeddingModel,
+  },
+  graphStore: {
+    uri: config.neo4j.uri,
+    username: config.neo4j.username,
+    password: config.neo4j.password,
+    database: config.neo4j.database,
+    maxConnectionPoolSize: config.neo4j.maxConnectionPoolSize,
+    connectionAcquisitionTimeout: config.neo4j.connectionAcquisitionTimeout,
+  },
+});
+
+console.error('Configuration loaded:');
+console.error(`- ChromaDB: ${config.chromaDB.host}:${config.chromaDB.port}`);
+console.error(`- Neo4j: ${config.neo4j.uri}`);
 
 // Define MCP tools
 const TOOLS: Tool[] = [
