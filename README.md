@@ -123,6 +123,65 @@ All dependencies are automatically installed with `npm install`.
 
 The Berlin Group MCP Server can optionally use external databases for enhanced capabilities. Both are **completely optional** – the server works perfectly without them using in-memory storage.
 
+### Configuration Methods
+
+The server supports two methods for configuration:
+
+1. **Environment Variables** (Recommended): Create a `.env` file in the project root
+2. **Direct Configuration**: Modify the configuration in `src/index.ts`
+
+#### Environment Variables
+
+Copy the `.env.example` file to `.env` and customize:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your settings:
+
+```env
+# ChromaDB Configuration (for Semantic Search)
+CHROMA_HOST=localhost
+CHROMA_PORT=8000
+CHROMA_COLLECTION=berlin_group_pdfs
+
+# OpenAI Configuration (for embeddings)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# Neo4j Configuration (for Graph Database)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+NEO4J_DATABASE=neo4j
+NEO4J_MAX_POOL_SIZE=50
+NEO4J_CONNECTION_TIMEOUT=60000
+```
+
+#### Direct Configuration
+
+Alternatively, you can modify the configuration directly in `src/index.ts`:
+
+```typescript
+const indexer = new SpecificationIndexer({
+  vectorStore: {
+    chromaHost: 'localhost',
+    chromaPort: 8000,
+    collectionName: 'my_collection',
+    embeddingModel: 'text-embedding-3-small'
+  },
+  graphStore: {
+    uri: 'bolt://localhost:7687',
+    username: 'neo4j',
+    password: 'password',
+    database: 'neo4j',
+    maxConnectionPoolSize: 50,
+    connectionAcquisitionTimeout: 60000
+  }
+});
+```
+
 ### ChromaDB (for Semantic Search)
 
 ChromaDB enables AI-powered semantic search across PDF documentation using vector embeddings.
@@ -136,23 +195,12 @@ pip install chromadb
 docker run -d -p 8000:8000 chromadb/chroma
 ```
 
-**Configuration:**
-ChromaDB uses default settings:
+**Default Configuration:**
 - Host: `localhost`
 - Port: `8000`
 - Collection: `berlin_group_pdfs`
 
 The server automatically connects during initialization. If ChromaDB is unavailable, semantic search falls back to keyword matching.
-
-**Custom Configuration** (modify `src/indexer.ts` if needed):
-```typescript
-this.vectorStore = createVectorStore({
-  chromaHost: 'localhost',     // Change to your ChromaDB host
-  chromaPort: 8000,            // Change to your ChromaDB port
-  collectionName: 'my_collection',
-  embeddingModel: 'text-embedding-3-small'  // For OpenAI embeddings
-});
-```
 
 ### Neo4j (for Graph Database)
 
@@ -170,26 +218,13 @@ docker run -d \
 # Or download from https://neo4j.com/download/
 ```
 
-**Configuration:**
-Neo4j uses default settings:
+**Default Configuration:**
 - URI: `bolt://localhost:7687`
 - Username: `neo4j`
-- Password: `neo4j`
+- Password: `password`
 - Database: `neo4j`
 
 The server automatically connects during initialization. If Neo4j is unavailable, graph queries use in-memory implementation.
-
-**Custom Configuration** (modify `src/indexer.ts` if needed):
-```typescript
-this.graphIndexer = createGraphIndexer({
-  uri: 'bolt://localhost:7687',
-  username: 'neo4j',
-  password: 'your-password',
-  database: 'neo4j',
-  maxConnectionPoolSize: 50,
-  connectionAcquisitionTimeout: 60000
-});
-```
 
 **Neo4j Browser Access:**
 Once Neo4j is running, access the browser interface at `http://localhost:7474` to visualize the graph:
@@ -197,6 +232,7 @@ Once Neo4j is running, access the browser interface at `http://localhost:7474` t
 // Example queries in Neo4j Browser
 MATCH (s:Specification)-[:DEFINES_ENDPOINT]->(e:Endpoint)
 RETURN s, e LIMIT 25
+```
 
 MATCH (e:Endpoint)-[:USES_SCHEMA]->(s:Schema)
 WHERE e.path CONTAINS 'payment'

@@ -333,4 +333,45 @@ describe('createGraphIndexer factory', () => {
     });
     expect(indexer).toBeInstanceOf(GraphIndexer);
   });
+
+  it('should accept custom database name', () => {
+    const indexer = createGraphIndexer({
+      database: 'custom_database',
+    });
+    expect(indexer).toBeInstanceOf(GraphIndexer);
+  });
+
+  it('should accept custom connection pool settings', () => {
+    const indexer = createGraphIndexer({
+      maxConnectionPoolSize: 100,
+      connectionAcquisitionTimeout: 30000,
+    });
+    expect(indexer).toBeInstanceOf(GraphIndexer);
+  });
+
+  it('should accept complete configuration', () => {
+    const indexer = createGraphIndexer({
+      uri: 'bolt://localhost:7687',
+      username: 'neo4j',
+      password: 'test_password',
+      database: 'test_db',
+      maxConnectionPoolSize: 75,
+      connectionAcquisitionTimeout: 45000,
+    });
+    expect(indexer).toBeInstanceOf(GraphIndexer);
+  });
+
+  it('should handle partial configuration', () => {
+    const indexer = createGraphIndexer({
+      uri: 'bolt://localhost:7687',
+    });
+    expect(indexer).toBeInstanceOf(GraphIndexer);
+  });
+
+  it('should create indexer with minimal config', () => {
+    const indexer = createGraphIndexer({
+      password: 'different_password',
+    });
+    expect(indexer).toBeInstanceOf(GraphIndexer);
+  });
 });
