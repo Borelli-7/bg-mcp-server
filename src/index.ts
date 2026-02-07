@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+
+// Load environment variables from .env file BEFORE any other imports that use process.env
+import 'dotenv/config';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {

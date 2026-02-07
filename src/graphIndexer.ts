@@ -206,10 +206,10 @@ export class GraphIndexer {
   private async indexSpecification(spec: OpenAPISpec): Promise<void> {
     await this.graphStore.createSpecification({
       fileName: spec.fileName,
-      title: spec.title,
-      version: spec.version,
-      description: spec.description,
-      openApiVersion: spec.version,
+      title: spec.title || spec.fileName,
+      version: spec.version || '1.0.0',
+      description: spec.description || '',
+      openApiVersion: spec.version || '3.0.0',
     });
 
     // Create tag nodes for this specification

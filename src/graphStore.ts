@@ -364,13 +364,16 @@ export class GraphStore {
    * Create a Specification node
    */
   async createSpecification(dto: CreateSpecificationDTO): Promise<GraphNode> {
-    const nodeId = createSpecificationId(dto.fileName);
-
-    // Ensure all properties have defaults for optional fields
+    // Ensure all properties have defaults for optional fields FIRST
     const safeDto = {
-      ...dto,
-      description: dto.description || '',
+      fileName: dto.fileName,
+      title: dto.title ?? dto.fileName,
+      version: dto.version ?? '1.0.0',
+      description: dto.description ?? '',
+      openApiVersion: dto.openApiVersion ?? '3.0.0',
     };
+
+    const nodeId = createSpecificationId(safeDto.fileName);
 
     if (this.useInMemory) {
       return this.inMemoryStore.createNode(['Specification'], safeDto, nodeId);
@@ -503,10 +506,20 @@ export class GraphStore {
    * Create a Parameter node and link to Endpoint
    */
   async createParameter(dto: CreateParameterDTO, endpointId: string): Promise<GraphNode> {
-    const nodeId = createParameterId(endpointId, dto.name, dto.in);
+    // Ensure all properties have defaults for optional fields
+    const safeDto = {
+      name: dto.name || '',
+      in: dto.in || 'query',
+      required: dto.required ?? false,
+      description: dto.description || '',
+      type: dto.type || 'string',
+      format: dto.format || '',
+    };
+
+    const nodeId = createParameterId(endpointId, safeDto.name, safeDto.in);
 
     if (this.useInMemory) {
-      const node = await this.inMemoryStore.createNode(['Parameter'], { ...dto, nodeId }, nodeId);
+      const node = await this.inMemoryStore.createNode(['Parameter'], { ...safeDto, nodeId }, nodeId);
       await this.inMemoryStore.createRelationship(endpointId, nodeId, RelationshipType.HAS_PARAMETER);
       return node;
     }
@@ -529,7 +542,7 @@ export class GraphStore {
           MERGE (e)-[:HAS_PARAMETER]->(p)
           RETURN p
           `,
-          { ...dto, endpointId, nodeId }
+          { ...safeDto, endpointId, nodeId }
         );
       });
 
@@ -543,10 +556,17 @@ export class GraphStore {
    * Create a Response node and link to Endpoint
    */
   async createResponse(dto: CreateResponseDTO, endpointId: string): Promise<GraphNode> {
-    const nodeId = createResponseId(endpointId, dto.statusCode);
+    // Ensure all properties have defaults for optional fields
+    const safeDto = {
+      statusCode: dto.statusCode || '200',
+      description: dto.description || '',
+      mediaType: dto.mediaType || '',
+    };
+
+    const nodeId = createResponseId(endpointId, safeDto.statusCode);
 
     if (this.useInMemory) {
-      const node = await this.inMemoryStore.createNode(['Response'], { ...dto, nodeId }, nodeId);
+      const node = await this.inMemoryStore.createNode(['Response'], { ...safeDto, nodeId }, nodeId);
       await this.inMemoryStore.createRelationship(endpointId, nodeId, RelationshipType.HAS_RESPONSE);
       return node;
     }
@@ -566,7 +586,7 @@ export class GraphStore {
           MERGE (e)-[:HAS_RESPONSE]->(r)
           RETURN r
           `,
-          { ...dto, endpointId, nodeId }
+          { ...safeDto, endpointId, nodeId }
         );
       });
 
