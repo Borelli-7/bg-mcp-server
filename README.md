@@ -210,9 +210,9 @@ Neo4j enables complex relationship queries and graph traversal across specificat
 ```bash
 # Using Docker (recommended)
 docker run -d \
-  -p 7474:7474 -p 7687:7687 \
+  -p 7475:7474 -p 7688:7687 \
   -e NEO4J_AUTH=neo4j/password \
-  --name neo4j \
+  --name neo4j_berling_group_mcp \
   neo4j:latest
 
 # Or download from https://neo4j.com/download/
