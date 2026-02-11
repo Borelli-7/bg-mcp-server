@@ -13,7 +13,7 @@ info:
     name: Creative Commons Attribution 4.0 International Public License
     url: https://creativecommons.org/licenses/by/4.0/
   title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures for V2.x- Signing Basket API
-  version: "2.2"
+  version: "2.3"
   x-references:
     documents:
       - document:
@@ -21,7 +21,7 @@ info:
         version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
-        version: "2.2"
+        version: "2.3"
 
 externalDocs:
   description: |
@@ -82,7 +82,6 @@ paths:
         - $ref: '#/components/parameters/HEADER_bodySigProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_contentType_mandatory'
         - $ref: '#/components/parameters/HEADER_consentId_optional'
         - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
       requestBody:
@@ -165,6 +164,7 @@ paths:
         - BearerAuthOAuth: []
       parameters:
         - $ref: '#/components/parameters/PATH_basketId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -507,13 +507,15 @@ paths:
                         The authentication method ID as provided by the ASPSP. 
                       type: string
                 - type: object #Case: \"Transaction Authorisation\"
-                  required:
-                    - scaAuthenticationData 
                   properties: 
                     scaAuthenticationData :
                       description: |
                         SCA authentication data, depending on the chosen authentication method. If the data is binary, then it is base64 encoded. 
                       type: string
+                    signatureData :
+                      description: |
+                        Data needed for the verification of the signature (e.g. JWS for JSON signatures) 
+                      type: string 
                 - type: object #Case: \"Authorisation Confirmation\"
                   required:
                     - confirmationCode 
@@ -3902,6 +3904,15 @@ components:
         type: string
       required: false
       example: 'status=SCA'
+    QUERY_toBeSigned:
+      name: toBeSigned
+      in: query
+      description: |
+        The API Client requests the exact representation of the resource, which needs to be signed. If present, this parameter must be set to true.
+      required: false
+      schema:
+        type: boolean
+        enum: [true]
     HEADER_clientScaApproachPreference:
       name: Client-SCA-Approach-Preference
       in: header
@@ -4113,14 +4124,6 @@ components:
       schema:
         $ref: '#/components/schemas/Max70Text'
       example: '123auth456'
-    HEADER_contentType_mandatory:
-      name: Content-Type
-      in: header
-      description: |
-      required: true
-      schema:
-        type: string
-      example: 'application/json'
     HEADER_clientRedirectUri:
       name: Client-Redirect-URI
       in: header

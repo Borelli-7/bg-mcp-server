@@ -18,13 +18,13 @@ info:
     documents:
       - document:
         title: openFinance API Framework Data Dictionary
-        version: "2.2.6"
+        version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Consent API for V2.x
         version: "2.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
-        version: "2.2"
+        version: "2.3"
 
 externalDocs:
   description: |
@@ -170,6 +170,7 @@ paths:
         - BearerAuthOAuth: []
       parameters:
         - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -332,6 +333,7 @@ paths:
         - BearerAuthOAuth: []
       parameters:
         - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -475,6 +477,7 @@ paths:
         - BearerAuthOAuth: []
       parameters:
         - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -634,6 +637,7 @@ paths:
         - BearerAuthOAuth: []
       parameters:
         - $ref: '#/components/parameters/PATH_consentId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -979,13 +983,15 @@ paths:
                         The authentication method ID as provided by the ASPSP. 
                       type: string
                 - type: object #Case: \"Transaction Authorisation\"
-                  required:
-                    - scaAuthenticationData 
                   properties: 
                     scaAuthenticationData :
                       description: |
                         SCA authentication data, depending on the chosen authentication method. If the data is binary, then it is base64 encoded. 
                       type: string
+                    signatureData :
+                      description: |
+                        Data needed for the verification of the signature (e.g. JWS for JSON signatures) 
+                      type: string 
                 - type: object #Case: \"Authorisation Confirmation\"
                   required:
                     - confirmationCode 
@@ -2377,7 +2383,6 @@ components:
       type: string
       enum: 
         - CERTIFICATE_INVALID
-        - ROLE_INVALID
         - CERTIFICATE_EXPIRED
         - CERTIFICATE_BLOCKED
         - CERTIFICATE_REVOKED
@@ -4645,6 +4650,15 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Max70Text'
+    QUERY_toBeSigned:
+      name: toBeSigned
+      in: query
+      description: |
+        The API Client requests the exact representation of the resource, which needs to be signed. If present, this parameter must be set to true.
+      required: false
+      schema:
+        type: boolean
+        enum: [true]
     HEADER_clientScaApproachPreference:
       name: Client-SCA-Approach-Preference
       in: header

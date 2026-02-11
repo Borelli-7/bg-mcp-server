@@ -22,7 +22,7 @@ info:
         version: "2.3.1"
       - document:
         title: openFinance API Framework Implementation Guidelines Protocol Functions and Security Measures
-        version: "2.2"
+        version: "2.3"
       - document:
         title: openFinance API Framework Payment Formats and Domestic AIS/PIS Definitions for Version 2.x
         version: "2.0"
@@ -91,7 +91,6 @@ paths:
         - $ref: '#/components/parameters/HEADER_bodySigProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_contentType_mandatory'
         - $ref: '#/components/parameters/HEADER_consentId_optional'
         - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
         - $ref: '#/components/parameters/HEADER_tppRejectionNoFundsPreferred'
@@ -177,7 +176,6 @@ paths:
         - $ref: '#/components/parameters/HEADER_bodySigProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_contentType_mandatory'
         - $ref: '#/components/parameters/HEADER_consentId_optional'
         - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
         - $ref: '#/components/parameters/HEADER_tppRejectionNoFundsPreferred'
@@ -263,7 +261,6 @@ paths:
         - $ref: '#/components/parameters/HEADER_bodySigProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncProfile'
         - $ref: '#/components/parameters/HEADER_bodyEncList'
-        - $ref: '#/components/parameters/HEADER_contentType_mandatory'
         - $ref: '#/components/parameters/HEADER_consentId_optional'
         - $ref: '#/components/parameters/HEADER_psuIpAddress_mandatory'
         - $ref: '#/components/parameters/HEADER_tppRejectionNoFundsPreferred'
@@ -415,6 +412,7 @@ paths:
         - $ref: '#/components/parameters/PATH_paymentService'
         - $ref: '#/components/parameters/PATH_paymentProduct_all'
         - $ref: '#/components/parameters/PATH_paymentId'
+        - $ref: '#/components/parameters/QUERY_toBeSigned'
         - $ref: '#/components/parameters/HEADER_digest'
         - $ref: '#/components/parameters/HEADER_xJwsSignature'
         - $ref: '#/components/parameters/HEADER_xRequestId'
@@ -784,13 +782,15 @@ paths:
                         The authentication method ID as provided by the ASPSP. 
                       type: string
                 - type: object #Case: \"Transaction Authorisation\"
-                  required:
-                    - scaAuthenticationData 
                   properties: 
                     scaAuthenticationData :
                       description: |
                         SCA authentication data, depending on the chosen authentication method. If the data is binary, then it is base64 encoded. 
                       type: string
+                    signatureData :
+                      description: |
+                        Data needed for the verification of the signature (e.g. JWS for JSON signatures) 
+                      type: string 
                 - type: object #Case: \"Authorisation Confirmation\"
                   required:
                     - confirmationCode 
@@ -1360,12 +1360,12 @@ components:
 #           description: |
 #             Account used to process charges asso-ciated with a transaction.
 #           allOf:
-#             - $ref: '#/components/schemas/accountReference3'
+#             - $ref: '#/components/schemas/accountReference'
 #         ultimateDebtor:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         instructedAmount:
           description: |
             Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party.
@@ -1382,6 +1382,16 @@ components:
 #             Set of elements used to provide details on the currency exchange rate and contract.
 #           allOf:
 #             - $ref: '#/components/schemas/paymentExchangeRate'
+#         intermediaryAgent1:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
+#         intermediaryAgent2:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
         creditorAccount:
           description: |
             Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
@@ -1608,7 +1618,7 @@ components:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         debtorAccount:
           description: |
             Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
@@ -1899,6 +1909,17 @@ components:
             Provided only in case of \"CMTC\" as code in creditorNameMatch.
           allOf:
             - $ref: '#/components/schemas/Max140Text'
+    DocumentFormatCode:
+      description: |
+         See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - DPDF
+        - DXML
+        - SDSH
+        - WORD
+        - XSLT
+      example: 'DXML'
     Max140Text:
       type: string
       maxLength: 140
@@ -2042,6 +2063,10 @@ components:
                 $ref: '#/components/schemas/MessageCode_ServiceUnspecific_409'
         _links:
           $ref: '#/components/schemas/links'
+    BinaryDocument:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Binary Document\" for more details.
+      type: string
     error_RFC7807_400_PIS: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
@@ -2250,6 +2275,12 @@ components:
         - $ref: '#/components/schemas/MessageCode_PisSpecific_403'
         - $ref: '#/components/schemas/MessageCode_PisSpecific_404'
         - $ref: '#/components/schemas/MessageCode_PisSpecific_405'
+    LanguageCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      pattern: '[a-z]{3,3}'
+      example: 'eng'
     Max70Text:
       type: string
       maxLength: 70
@@ -2462,6 +2493,14 @@ components:
 #                 Party that owes an amount of money to the (ultimate) creditor.
 #               allOf:
 #                 - $ref: '#/components/schemas/partyDescription'
+#             enclosedFile:
+#               description: |
+#                 To Do: File enclosed for payment.
+#               type: array
+#               minItems: 1
+#               maxItems: 1
+#               items:
+#                 $ref: '#/components/schemas/enclosedFile'
 #             requestedExecutionDate:
 #               description: |
 #                 Date at which the initiating party requests the clearing agent to process the payment.
@@ -2538,12 +2577,12 @@ components:
 #           description: |
 #             Account used to process charges asso-ciated with a transaction.
 #           allOf:
-#             - $ref: '#/components/schemas/accountReference3'
+#             - $ref: '#/components/schemas/accountReference'
 #         ultimateDebtor:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         instructedAmount:
           description: |
             Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party.
@@ -2560,6 +2599,16 @@ components:
 #             Set of elements used to provide details on the currency exchange rate and contract.
 #           allOf:
 #             - $ref: '#/components/schemas/paymentExchangeRate'
+#         intermediaryAgent1:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
+#         intermediaryAgent2:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
         creditorAccount:
           description: |
             Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
@@ -2642,6 +2691,14 @@ components:
 #                 Party that owes an amount of money to the (ultimate) creditor.
 #               allOf:
 #                 - $ref: '#/components/schemas/partyDescription'
+#             enclosedFile:
+#               description: |
+#                 To Do: File enclosed for payment.
+#               type: array
+#               minItems: 1
+#               maxItems: 1
+#               items:
+#                 $ref: '#/components/schemas/enclosedFile'
 #             requestedExecutionDate:
 #               description: |
 #                 Date at which the initiating party requests the clearing agent to process the payment.
@@ -2775,6 +2832,12 @@ components:
 #                 Party that owes an amount of money to the (ultimate) creditor.
 #               allOf:
 #                 - $ref: '#/components/schemas/partyDescription'
+            enclosedFile:
+              description: |
+                To Do: File enclosed for payment.
+              type: array
+              items:
+                $ref: '#/components/schemas/enclosedFile'
 #             requestedExecutionDate:
 #               description: |
 #                 Date at which the initiating party requests the clearing agent to process the payment.
@@ -2898,16 +2961,16 @@ components:
             Specifies which party/parties will bear the charges associated with the processing of the payment transaction.
           allOf:
             - $ref: '#/components/schemas/ChargeBearer'
-        chargesAccount:
-          description: |
-            Account used to process charges asso-ciated with a transaction.
-          allOf:
-            - $ref: '#/components/schemas/accountReference'
-        ultimateDebtor:
-          description: |
-            Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
-          allOf:
-            - $ref: '#/components/schemas/partyDescription'
+#         chargesAccount:
+#           description: |
+#             Account used to process charges asso-ciated with a transaction.
+#           allOf:
+#             - $ref: '#/components/schemas/accountReference'
+#         ultimateDebtor:
+#           description: |
+#             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
+#           allOf:
+#             - $ref: '#/components/schemas/partyDescription'
         instructedAmount:
           description: |
             Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party.
@@ -2924,6 +2987,16 @@ components:
 #             Set of elements used to provide details on the currency exchange rate and contract.
 #           allOf:
 #             - $ref: '#/components/schemas/paymentExchangeRate'
+#         intermediaryAgent1:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
+#         intermediaryAgent2:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
         creditorAccount:
           description: |
             Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
@@ -3158,6 +3231,29 @@ components:
             An explanation of a mandated change mechanism.
           allOf:
             - $ref: '#/components/schemas/Max1024Text'
+    DocumentTypeCode:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Other ISO-related basic Types\" for more details.
+      type: string
+      enum:
+        - CINV
+        - CNFA
+        - CONT
+        - CREN
+        - DEBN
+        - DISP
+        - DNFA
+        - HIRI
+        - INVS
+        - MSIN
+        - PROF
+        - PUOR
+        - QUOT
+        - SBIN
+        - SPRR
+        - TISH
+        - USAR
+      example: 'CINV'
     error_RFC7807_403_PIS: 
       description: |
         Standardised definition of reporting error information according to [RFC7807].
@@ -3214,6 +3310,79 @@ components:
                 $ref: '#/components/schemas/MessageCode_403_PIS'
         _links:
           $ref: '#/components/schemas/links'
+    enclosedFile:
+      description: |
+        See document \"openFinance API Framework Data Dictionary\", section \"Enclosed File\" for more details.
+      type: object
+      required:
+        - identification
+        - enclosure
+      properties:
+        typeCode:
+          description: |
+            Type of document or template.
+          allOf:
+            - $ref: '#/components/schemas/DocumentTypeCode'
+        typeProprietary:
+          description: |
+            Type of document or template.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        identification:
+          description: |
+            Identification of the document or template.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        issueDate:
+          description: |
+            Issue date of the document.
+          allOf:
+            - $ref: '#/components/schemas/ISODate'
+        issueDateTime:
+          description: |
+            Issue date and time of the document.
+          allOf:
+            - $ref: '#/components/schemas/ISODateTime'
+        name:
+          description: |
+            Name of document or transaction, for example, tax invoice.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        languageCode:
+           description: |
+            Unique identifier for a language used in the document.
+           allOf:
+            - $ref: '#/components/schemas/LanguageCode'
+        formatCode:
+          description: |
+            Format of the document or template, such as PDF, XML, XSLT.
+          allOf:
+            - $ref: '#/components/schemas/DocumentFormatCode'
+        formatProprietary:
+          description: |
+            Proprietary format encoding.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        formatProprietarySchemeName:
+          description: |
+            May be used only if also formatProprietary is used.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        formatProprietaryIssuer:
+          description: |
+            Proprietary format encoding.
+          allOf:
+            - $ref: '#/components/schemas/Max35Text'
+        fileName:
+          description: |
+            Technical name of the file.
+          allOf:
+            - $ref: '#/components/schemas/Max140Text'
+        enclosure:
+          description: |
+            Base64 encoding of the binary file representing the enclosed document or template, such as a PDF file, image file,XML file, MT message.
+          allOf:
+            - $ref: '#/components/schemas/BinaryDocument'
     clientMessageInformation_401_PIS:
       type: object
       required:
@@ -3303,30 +3472,6 @@ components:
         See document \"openFinance API Framework Data Dictionary\", section \"Exchange Rate Type Code\" for more details.
       type: string
       enum:
-        - '0090'
-        - '0091'
-        - '0092'
-        - '0002'
-        - '0221'
-        - '0224'
-        - '0226'
-        - '0225'
-        - '0222'
-        - '0227'
-        - '0220'
-        - '0223'
-        - '0001'
-        - '0000'
-        - 'BTR'
-        - 'CKS'
-        - 'CTR'
-        - 'DEP'
-        - 'FFR'
-        - 'FFS'
-        - 'SVC'
-        - 'DRW'
-        - 'DRB'
-        - 'DRC'
         - 'DDMC'
         - 'DDMP'
         - 'DDMU'
@@ -3508,7 +3653,7 @@ components:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         debtorAccount:
           description: |
             Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
@@ -3924,7 +4069,7 @@ components:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         debtorAccount:
           description: |
             Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
@@ -5341,6 +5486,14 @@ components:
 #                 Party that owes an amount of money to the (ultimate) creditor.
 #               allOf:
 #                 - $ref: '#/components/schemas/partyDescription'
+#             enclosedFile:
+#               description: |
+#                 To Do: File enclosed for payment.
+#               type: array
+#               minItems: 1
+#               maxItems: 1
+#               items:
+#                 $ref: '#/components/schemas/enclosedFile'
 #             requestedExecutionDate:
 #               description: |
 #                 Date at which the initiating party requests the clearing agent to process the payment.
@@ -5709,12 +5862,12 @@ components:
 #           description: |
 #             Account used to process charges asso-ciated with a transaction.
 #           allOf:
-#             - $ref: '#/components/schemas/accountReference3'
+#             - $ref: '#/components/schemas/accountReference'
 #         ultimateDebtor:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         instructedAmount:
           description: |
             Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party.
@@ -5731,6 +5884,16 @@ components:
 #             Set of elements used to provide details on the currency exchange rate and contract.
 #           allOf:
 #             - $ref: '#/components/schemas/paymentExchangeRate'
+#         intermediaryAgent1:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
+#         intermediaryAgent2:
+#           description: |
+#             Financial institution servicing as intermediary agent.
+#           allOf:
+#             - $ref: '#/components/schemas/agentDescription'
         creditorAccount:
           description: |
             Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
@@ -6307,6 +6470,14 @@ components:
 #                 Party that owes an amount of money to the (ultimate) creditor.
 #               allOf:
 #                 - $ref: '#/components/schemas/partyDescription'
+#             enclosedFile:
+#               description: |
+#                 To Do: File enclosed for payment.
+#               type: array
+#               minItems: 1
+#               maxItems: 1
+#               items:
+#                 $ref: '#/components/schemas/enclosedFile'
 #             requestedExecutionDate:
 #               description: |
 #                 Date at which the initiating party requests the clearing agent to process the payment.
@@ -6695,7 +6866,7 @@ components:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         debtorAccount:
           description: |
             Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
@@ -6827,7 +6998,7 @@ components:
 #           description: |
 #             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
 #           allOf:
-#             - $ref: '#/components/schemas/partyDescription1'
+#             - $ref: '#/components/schemas/partyDescription'
         instructedAmount:
           description: |
             Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party.
@@ -6844,6 +7015,16 @@ components:
 #             Set of elements used to provide details on the currency exchange rate and contract.
 #           allOf:
 #             - $ref: '#/components/schemas/paymentExchangeRate'
+        intermediaryAgent1:
+          description: |
+            Financial institution servicing as intermediary agent.
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
+        intermediaryAgent2:
+          description: |
+            Financial institution servicing as intermediary agent.
+          allOf:
+            - $ref: '#/components/schemas/agentDescription1'
         creditorAccount:
           description: |
             Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
@@ -6979,11 +7160,11 @@ components:
 #             Party that owes an amount of money to the (ultimate) creditor.
 #           allOf:
 #             - $ref: '#/components/schemas/partyDescription'
-        ultimateDebtor:
-          description: |
-            Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
-          allOf:
-            - $ref: '#/components/schemas/partyDescription'
+#         ultimateDebtor:
+#           description: |
+#             Ultimate party that owes an amount of money to the (ultimate) creditor. Restriction to the schema are applied depending on the product.
+#           allOf:
+#             - $ref: '#/components/schemas/partyDescription'
         debtorAccount:
           description: |
             Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
@@ -7287,6 +7468,15 @@ components:
         type: string
       required: false
       example: 'status=SCA'
+    QUERY_toBeSigned:
+      name: toBeSigned
+      in: query
+      description: |
+        The API Client requests the exact representation of the resource, which needs to be signed. If present, this parameter must be set to true.
+      required: false
+      schema:
+        type: boolean
+        enum: [true]
     HEADER_clientScaApproachPreference:
       name: Client-SCA-Approach-Preference
       in: header
@@ -7607,14 +7797,6 @@ components:
       schema:
         $ref: '#/components/schemas/Max70Text'
       example: '123auth456'
-    HEADER_contentType_mandatory:
-      name: Content-Type
-      in: header
-      description: |
-      required: true
-      schema:
-        type: string
-      example: 'application/json'
     HEADER_clientRedirectUri:
       name: Client-Redirect-URI
       in: header
