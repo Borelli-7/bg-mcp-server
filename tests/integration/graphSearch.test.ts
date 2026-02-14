@@ -5,15 +5,11 @@
 
 import { SpecificationIndexer } from '../../src/indexer.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 describe('Graph Search Integration', () => {
   let indexer: SpecificationIndexer;
-  const yamlDir = path.resolve(__dirname, '../../yml_files');
-  const pdfDir = path.resolve(__dirname, '../../pdf_files');
+  const yamlDir = path.resolve(process.cwd(), 'yml_files');
+  const pdfDir = path.resolve(process.cwd(), 'pdf_files');
 
   beforeAll(async () => {
     indexer = new SpecificationIndexer();
