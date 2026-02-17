@@ -84,8 +84,9 @@ describe('VectorStore', () => {
   let testChunks: TextChunk[];
 
   beforeEach(async () => {
+    // Force in-memory mode by using non-existent ChromaDB host for unit tests
     vectorStore = new VectorStore(
-      { collectionName: 'test_collection' },
+      { collectionName: 'test_collection', chromaHost: 'nonexistent-host', chromaPort: 9999 },
       new LocalEmbeddingProvider()
     );
     await vectorStore.initialize();
@@ -125,6 +126,12 @@ describe('VectorStore', () => {
         },
       },
     ];
+  });
+
+  afterEach(async () => {
+    if (vectorStore && vectorStore.isInitialized()) {
+      await vectorStore.clear();
+    }
   });
 
   describe('initialize', () => {

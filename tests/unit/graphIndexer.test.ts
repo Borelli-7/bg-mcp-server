@@ -10,14 +10,10 @@ import {
   IndexingProgress,
 } from '../../src/graphIndexer.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 describe('GraphIndexer', () => {
   let graphIndexer: GraphIndexer;
-  const testYamlDir = path.resolve(__dirname, '../../yml_files');
+  const testYamlDir = path.resolve(process.cwd(), 'yml_files');
 
   beforeEach(() => {
     graphIndexer = createGraphIndexer({

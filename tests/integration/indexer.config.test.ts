@@ -5,14 +5,10 @@
 
 import { SpecificationIndexer } from '../../src/indexer.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 describe('SpecificationIndexer Configuration Integration', () => {
-  const testYamlDir = path.join(__dirname, '../../yml_files');
-  const testPdfDir = path.join(__dirname, '../../pdf_files');
+  const testYamlDir = path.join(process.cwd(), 'yml_files');
+  const testPdfDir = path.join(process.cwd(), 'pdf_files');
 
   describe('initialization with custom VectorStore configuration', () => {
     it('should initialize with custom ChromaDB settings', async () => {
@@ -156,7 +152,11 @@ describe('SpecificationIndexer Configuration Integration', () => {
       if (schemas.length > 0) {
         const related = await indexer.findRelatedSchemas(schemas[0].name);
         expect(related).toBeDefined();
-        expect(related.schema).toBeDefined();
+        expect(Array.isArray(related)).toBe(true);
+        if (related.length > 0) {
+          expect(related[0].schemaName).toBeDefined();
+          expect(related[0].relationshipType).toBeDefined();
+        }
       }
     });
 

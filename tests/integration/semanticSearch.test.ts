@@ -1,14 +1,10 @@
 import { SpecificationIndexer } from '../../src/indexer.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 describe('SpecificationIndexer - Semantic Search Integration', () => {
   let indexer: SpecificationIndexer;
-  const testYamlDir = path.join(__dirname, '../../yml_files');
-  const testPdfDir = path.join(__dirname, '../../pdf_files');
+  const testYamlDir = path.join(process.cwd(), 'yml_files');
+  const testPdfDir = path.join(process.cwd(), 'pdf_files');
 
   beforeAll(async () => {
     indexer = new SpecificationIndexer();

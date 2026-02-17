@@ -7,3 +7,4 @@ dist/
 .vscode/settings.json
 .vscode/mcp-settings.json
 .idea/
+coverage/
